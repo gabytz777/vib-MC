@@ -1,0 +1,39 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+java {
+    withSourcesJar()
+}
+
+application {
+    mainClass = 'net.vibmc.server.VibMC'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testImplementation 'org.mockito:mockito-core:5.4.0'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'net.vibmc.server.VibMC',
+            'Implementation-Title': 'vib-MC',
+            'Implementation-Version': '1.0.0'
+        )
+    }
+    archiveBaseName = 'vib-mc'
+}

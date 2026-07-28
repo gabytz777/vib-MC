@@ -1,0 +1,5 @@
+name: ExamplePlugin
+version: 1.0.0
+main: net.vibmc.example.ExamplePlugin
+author: vib-MC Team
+description: An example plugin for vib-MC

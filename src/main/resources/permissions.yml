@@ -1,0 +1,15 @@
+# vib-MC Default Permissions
+# Modify this file to customize permissions
+
+groups:
+  default:
+    permissions:
+      - vibmc.command.help
+      - vibmc.command.list
+      - vibmc.command.seed
+      - vibmc.command.say
+  
+  admin:
+    permissions:
+      - vibmc.*
+      - vibmc.admin

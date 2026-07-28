@@ -1,0 +1,15 @@
+.gradle/
+build/
+out/
+*.class
+*.jar
+!vib-mc.jar
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+*.log
+crash-reports/
+world/
+plugins/*.jar
