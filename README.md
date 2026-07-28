@@ -2,167 +2,94 @@
 
 <div align="center">
 
-[![Work in Progress](https://img.shields.io/badge/status-WIP-red?style=for-the-badge)](https://github.com/anomalyco/vib-MC)
-[![Java](https://img.shields.io/badge/Java-21%2B-orange?style=for-the-badge&logo=java)](https://adoptium.net/)
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.12.2-blue?style=for-the-badge&logo=minecraft)](https://minecraft.net/)
-[![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
-[![Build](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)]()
+[![Work in Progress](https://img.shields.io/badge/status-WIP-red?style=for-the-badge)]()
+[![AI Generated](https://img.shields.io/badge/AI-Generated-9cf?style=for-the-badge)]()
+[![Vibecoded](https://img.shields.io/badge/Vibecoded-ff69b4?style=for-the-badge)]()
+[![Java](https://img.shields.io/badge/Java-8-orange?style=for-the-badge&logo=java)]()
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.12.2-blue?style=for-the-badge&logo=minecraft)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)]()
 
-**A modular, extensible Minecraft server implementation written in Java**
+**vibed into existence** — a Minecraft server made entirely by AI, one prompt at a time.
 
-> ⚠️ **Work in Progress** — This project is under active development. Many features are incomplete or missing.
+> ⚠️ **Work in Progress** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
 
 </div>
 
 ---
 
-## Overview
-
-vib-MC is a from-scratch Minecraft server implementation targeting protocol **340 (1.12.2)**. It features NIO-based networking, procedural terrain generation, a plugin API with event system, mob AI, and full command support — all built without any external dependencies on existing server software.
-
-## Screenshots
-
-*Screenshots coming soon — currently debugging terrain rendering.*
-
-## Badges
-
-[![Java 21](https://img.shields.io/badge/Java-21%2B-orange)](https://adoptium.net/)
-[![Minecraft 1.12.2](https://img.shields.io/badge/Minecraft-1.12.2-blue)](https://minecraft.net/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen)]()
-
-## Building
-
-```bash
-./gradlew build
-```
-
-> **Note**: Requires JDK 21+. The built JAR is at `build/libs/vib-mc.jar`.
-
-## Running
-
-```bash
-java -jar build/libs/vib-mc.jar
-```
-
-Or via Gradle:
-
-```bash
-./gradlew run
-```
-
-On first launch, the server generates `server.properties` and a `world/` directory.
-
-## Configuration
-
-Edit `server.properties`:
-
-| Property | Default | Description |
-|----------|---------|-------------|
-| `motd` | `A vib-MC server` | Server message of the day |
-| `max-players` | `20` | Maximum concurrent players |
-| `seed` | `0` | World generation seed |
-| `difficulty` | `easy` | peaceful / easy / normal / hard |
-| `view-distance` | `8` | Chunk view distance (3–32) |
-| `server-port` | `25565` | Server port |
-| `online-mode` | `false` | Enable Mojang authentication |
-| `level-name` | `world` | World directory name |
-
-## Commands
-
-| Command | Description | Permission |
-|---------|-------------|------------|
-| `/help` | List commands | `vibmc.command.help` |
-| `/tp` | Teleport players | `vibmc.command.tp` |
-| `/gamemode` | Change gamemode | `vibmc.command.gamemode` |
-| `/time` | Set / query time | `vibmc.command.time` |
-| `/weather` | Change weather | `vibmc.command.weather` |
-| `/give` | Give items | `vibmc.command.give` |
-| `/kill` | Kill player | `vibmc.command.kill` |
-| `/say` | Broadcast message | `vibmc.command.say` |
-| `/seed` | Show world seed | `vibmc.command.seed` |
-| `/save-all` | Save worlds | `vibmc.command.save` |
-| `/stop` | Stop server | `vibmc.command.stop` |
-| `/list` | List players | `vibmc.command.list` |
-
-## Plugin API
-
-Plugins are loaded from the `plugins/` directory. Create a JAR with:
-
-1. A `plugin.yml`:
-   ```yaml
-   name: MyPlugin
-   version: 1.0
-   main: com.example.MyPlugin
-   ```
-2. Main class extending `VibMCPlugin`
-3. Implement `Listener` and use `@EventHandler`
-
-### Available Events
-
-| Event | Description | Cancellable |
-|-------|-------------|:-----------:|
-| `PlayerJoinEvent` | Player joins | ✗ |
-| `PlayerQuitEvent` | Player leaves | ✗ |
-| `BlockBreakEvent` | Block is broken | ✓ |
-| `BlockPlaceEvent` | Block is placed | ✓ |
-| `EntitySpawnEvent` | Entity spawns | ✓ |
-| `EntityDeathEvent` | Entity dies | ✗ |
-| `PlayerMoveEvent` | Player moves | ✓ |
-| `ChatEvent` | Player chats | ✓ |
-| `TickEvent.Start` | Every tick start | ✗ |
-| `TickEvent.End` | Every tick end | ✗ |
-
-## Architecture
-
-```
-net.vibmc.server      — Server core, lifecycle
-net.vibmc.config      — Configuration
-net.vibmc.network     — Minecraft protocol, NIO networking
-net.vibmc.world       — World, chunks, block types
-net.vibmc.world.gen   — Terrain generation
-net.vibmc.entity      — Entity base, AI, pathfinding
-net.vibmc.entity.mob  — Mob implementations
-net.vibmc.player      — Player management
-net.vibmc.inventory   — Inventory system
-net.vibmc.item        — Item registry, ItemStack
-net.vibmc.command     — Command framework
-net.vibmc.plugin      — Plugin API, event system
-net.vibmc.scheduler   — Tick scheduler
-net.vibmc.scoreboard  — Scoreboards, teams, boss bars
-net.vibmc.advancement — Advancement framework
-net.vibmc.permission  — Permission system
-net.vibmc.metrics     — TPS monitoring, server metrics
-```
+`vib-MC` is a Minecraft server (protocol 340 / 1.12.2) that was **entirely vibecoded by AI**. No human wrote any of this. It connects, generates terrain, and occasionally works. Built with Java 8 because that's what vibes with the project.
 
 ## Features
 
 | Status | Feature |
 |:------:|---------|
-| ✅ | Minecraft protocol (1.12.2 — protocol 340) |
-| ✅ | Player join / leave / inventory |
-| ✅ | Procedural terrain generation |
-| ✅ | Infinite world with seed support |
-| ✅ | Day / night cycle |
-| ✅ | Weather system |
-| ✅ | Passive mobs (Cow, Pig, Sheep, Chicken) |
-| ✅ | Hostile mobs (Zombie, Skeleton, Spider, Creeper) |
-| ✅ | Mob AI (pathfinding, wandering, combat) |
-| ✅ | Full command system |
-| ✅ | Plugin API with event system |
-| ✅ | Chunk loading / saving (Anvil format) |
-| ✅ | Scheduler API |
-| ✅ | Scoreboards, teams, boss bars |
-| ✅ | Advancements framework |
-| ✅ | Permissions |
-| ✅ | TPS monitoring |
-| ✅ | Crash reports |
-| ✅ | Asynchronous chunk I/O |
-| ⚠️ | Terrain rendering (in progress) |
-| ⚠️ | Redstone framework (extensible) |
-| ⚠️ | Crafting recipes (extensible) |
-| ❌ | Nether / End dimensions |
+| ✅ | Actually starts |
+| ✅ | People can join |
+| ✅ | Terrain generates (somewhere) |
+| ⚠️ | Terrain renders (we're working on it) |
+| ⚠️ | Camera moves (also working on it) |
+| ✅ | Plugin API |
+| ✅ | Mobs that exist |
+| ❌ | Nether (who needs it) |
+| ❌ | Working game (soon™) |
+
+## Requirements
+
+- **Java 8** (anything newer is overkill for this vibe)
+
+## Quick Start
+
+```bash
+./gradlew build
+java -jar build/libs/vib-mc.jar
+```
+
+Server starts on port 25565 by default. Edit `server.properties` after first run.
+
+## Commands
+
+`/help`, `/tp`, `/gamemode`, `/time`, `/weather`, `/give`, `/kill`, `/say`, `/seed`, `/save-all`, `/stop`, `/list`
+
+## Architecture
+
+```
+net.vibmc.server      — makes it go
+net.vibmc.network     — talks to Minecraft
+net.vibmc.world       — blocks and stuff
+net.vibmc.world.gen   — makes the ground
+net.vibmc.entity      — things that move
+net.vibmc.player      — the people
+net.vibmc.plugin      — mod support
+net.vibmc.command     — slash commands
+net.vibmc.scheduler   — tick tock
+net.vibmc.scoreboard  — numbers
+net.vibmc.permission  — who can do what
+```
 
 ## License
 
-[MIT](LICENSE)
+MIT — do whatever you want with this AI-generated mess.
+
+```
+MIT License
+
+Copyright (c) 2026 vib-MC
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
