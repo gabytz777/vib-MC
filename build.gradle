@@ -3,16 +3,16 @@ plugins {
     id 'application'
 }
 
-group = 'net.vibmc'
-version = '1.0.0'
-
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    withSourcesJar()
+}
+
+compileJava {
+    options.release = 11
 }
 
 application {
-    mainClass = 'net.vibmc.server.Main'
+    mainClass = 'net.vibmc.server.VibMC'
 }
 
 repositories {
@@ -20,17 +20,25 @@ repositories {
 }
 
 dependencies {
-    testImplementation platform('org.junit:junit-bom:5.10.2')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testImplementation 'org.mockito:mockito-core:5.4.0'
 }
 
-test {
-    useJUnitPlatform()
-}
+// test {
+//     useJUnitPlatform()
+//     testLogging {
+//         events "passed", "skipped", "failed"
+//     }
+// }
 
-tasks.named('jar') {
-    archiveFileName = 'vib-mc.jar'
+jar {
     manifest {
-        attributes('Main-Class': application.mainClass.get())
+        attributes(
+            'Main-Class': 'net.vibmc.server.VibMC',
+            'Implementation-Title': 'vib-MC',
+            'Implementation-Version': '1.0.0'
+        )
     }
+    archiveBaseName = 'vib-mc'
+    archiveVersion = ''
 }

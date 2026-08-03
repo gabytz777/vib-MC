@@ -1,18 +1,25 @@
 package net.vibmc.command;
 
-import net.vibmc.server.Server;
+import net.vibmc.command.commands.*;
+import net.vibmc.entity.PlayerEntity;
+import net.vibmc.server.VibMC;
 
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 public class CommandManager {
-    private final Server server;
-    private final Map<String, Command> commands = new LinkedHashMap<>();
+    private final Map<String, Command> commands;
+    private Thread consoleThread;
 
-    public CommandManager(Server server) {
-        this.server = server;
+    public CommandManager() {
+        this.commands = new HashMap<>();
+        registerDefaults();
+    }
+
+    private void registerDefaults() {
         register(new HelpCommand());
-        register(new TpCommand());
+        register(new TeleportCommand());
         register(new GamemodeCommand());
         register(new TimeCommand());
         register(new WeatherCommand());
@@ -26,170 +33,67 @@ public class CommandManager {
     }
 
     public void register(Command command) {
-        commands.put(command.name(), command);
+        commands.put(command.getName().toLowerCase(), command);
+        VibMC.getInstance().getLogger().debug("Registered command: /%s", command.getName());
     }
 
-    public boolean dispatch(String input) {
-        String trimmed = input.trim();
-        if (trimmed.isEmpty()) {
-            return false;
+    public void registerCommand(Command command) {
+        register(command);
+    }
+
+    public boolean execute(CommandSender sender, String input) {
+        if (input == null || input.trim().isEmpty()) return false;
+
+        String[] parts = input.trim().split(" ");
+        String commandName = parts[0].toLowerCase();
+        if (commandName.startsWith("/")) {
+            commandName = commandName.substring(1);
         }
-        String[] parts = trimmed.split("\\s+");
-        Command command = commands.get(parts[0].toLowerCase());
+        String[] args = new String[parts.length - 1];
+        System.arraycopy(parts, 1, args, 0, args.length);
+
+        Command command = commands.get(commandName);
         if (command == null) {
+            sender.sendMessage("{\"text\":\"§cUnknown command. Use /help for a list of commands.\"}");
             return false;
         }
-        command.execute(server, parts);
-        return true;
+
+        if (command.getPermission() != null && !command.getPermission().isEmpty()) {
+            if (sender.isPlayer()) {
+                var player = sender.getPlayer();
+                var permManager = VibMC.getInstance().getPluginManager().getPermissionManager();
+                if (!permManager.hasPermission(player, command.getPermission())) {
+                    sender.sendMessage("{\"text\":\"§cYou don't have permission to use this command.\"}");
+                    return false;
+                }
+            }
+        }
+
+        return command.execute(sender, args);
     }
 
-    public interface Command {
-        String name();
-
-        void execute(Server server, String[] args);
+    public void startConsole() {
+        consoleThread = new Thread(() -> {
+            try (Scanner scanner = new Scanner(System.in)) {
+                while (VibMC.getInstance().isRunning() && scanner.hasNextLine()) {
+                    String input = scanner.nextLine();
+                    if (input == null) break;
+                    CommandSender console = new CommandSender("CONSOLE");
+                    execute(console, input);
+                }
+            } catch (Exception e) {
+                // Console input ended
+            }
+        }, "Console");
+        consoleThread.setDaemon(true);
+        consoleThread.start();
     }
 
-    public static class HelpCommand implements Command {
-        @Override
-        public String name() {
-            return "help";
-        }
-
-        @Override
-        public void execute(Server server, String[] args) {
-            System.out.println("Available commands: help, tp, gamemode, time, weather, give, kill, say, seed, save-all, stop, list");
-        }
+    public Command getCommand(String name) {
+        return commands.get(name.toLowerCase());
     }
 
-    public static class TpCommand implements Command {
-        @Override
-        public String name() {
-            return "tp";
-        }
-
-        @Override
-        public void execute(Server server, String[] args) {
-            System.out.println("Teleport command not fully implemented yet.");
-        }
-    }
-
-    public static class GamemodeCommand implements Command {
-        @Override
-        public String name() {
-            return "gamemode";
-        }
-
-        @Override
-        public void execute(Server server, String[] args) {
-            System.out.println("Gamemode command not fully implemented yet.");
-        }
-    }
-
-    public static class TimeCommand implements Command {
-        @Override
-        public String name() {
-            return "time";
-        }
-
-        @Override
-        public void execute(Server server, String[] args) {
-            System.out.println("Time command available.");
-        }
-    }
-
-    public static class WeatherCommand implements Command {
-        @Override
-        public String name() {
-            return "weather";
-        }
-
-        @Override
-        public void execute(Server server, String[] args) {
-            System.out.println("Weather hook ready.");
-        }
-    }
-
-    public static class GiveCommand implements Command {
-        @Override
-        public String name() {
-            return "give";
-        }
-
-        @Override
-        public void execute(Server server, String[] args) {
-            System.out.println("Give command available.");
-        }
-    }
-
-    public static class KillCommand implements Command {
-        @Override
-        public String name() {
-            return "kill";
-        }
-
-        @Override
-        public void execute(Server server, String[] args) {
-            System.out.println("Kill command available.");
-        }
-    }
-
-    public static class SayCommand implements Command {
-        @Override
-        public String name() {
-            return "say";
-        }
-
-        @Override
-        public void execute(Server server, String[] args) {
-            System.out.println(String.join(" ", args));
-        }
-    }
-
-    public static class SeedCommand implements Command {
-        @Override
-        public String name() {
-            return "seed";
-        }
-
-        @Override
-        public void execute(Server server, String[] args) {
-            System.out.println("World seed: " + server.world().seed());
-        }
-    }
-
-    public static class SaveAllCommand implements Command {
-        @Override
-        public String name() {
-            return "save-all";
-        }
-
-        @Override
-        public void execute(Server server, String[] args) {
-            System.out.println("Saved world state.");
-        }
-    }
-
-    public static class StopCommand implements Command {
-        @Override
-        public String name() {
-            return "stop";
-        }
-
-        @Override
-        public void execute(Server server, String[] args) {
-            server.stop();
-        }
-    }
-
-    public static class ListCommand implements Command {
-        @Override
-        public String name() {
-            return "list";
-        }
-
-        @Override
-        public void execute(Server server, String[] args) {
-            System.out.println("No players connected.");
-        }
+    public Map<String, Command> getCommands() {
+        return commands;
     }
 }

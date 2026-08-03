@@ -1,0 +1,14 @@
+.gradle/
+build/
+bin/
+out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.class
+
+# Runtime data
+world/
+plugins/

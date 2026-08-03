@@ -1,4 +1,6 @@
 package net.vibmc.plugin.event;
 
-public record TickEvent(long tick) implements Event {
+public class TickEvent {
+    public static class Start extends Event {}
+    public static class End extends Event {}
 }

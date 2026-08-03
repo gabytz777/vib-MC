@@ -13,7 +13,10 @@ public enum Block {
     FURNACE((short) 9, 1.0f, 2.5f),
     CRAFTING_TABLE((short) 10, 1.0f, 2.5f),
     DOOR((short) 11, 1.0f, 2.5f),
-    TRAPDOOR((short) 12, 1.0f, 2.5f);
+    TRAPDOOR((short) 12, 1.0f, 2.5f),
+    SAND((short) 13, 0.5f, 2.5f),
+    GRAVEL((short) 14, 0.6f, 3.0f),
+    BEDROCK((short) 15, -1.0f, 3600000.0f);
 
     private final short id;
     private final float hardness;
@@ -35,5 +38,55 @@ public enum Block {
 
     public float blastResistance() {
         return blastResistance;
+    }
+
+    /**
+     * Maps an internal block id to the vanilla block id used by the protocol.
+     * Block states are encoded as (vanilla id << 4 | metadata).
+     */
+    public static short protocolIdOf(short internalId) {
+        for (Block block : values()) {
+            if (block.id == internalId) {
+                return block.protocolId();
+            }
+        }
+        return 0;
+    }
+
+    public short protocolId() {
+        switch (this) {
+            case STONE:
+                return 1;
+            case GRASS:
+                return 2;
+            case DIRT:
+                return 3;
+            case WOOD:
+                return 17; // log
+            case LEAVES:
+                return 18;
+            case WATER:
+                return 9;
+            case LAVA:
+                return 11;
+            case SAND:
+                return 12;
+            case GRAVEL:
+                return 14;
+            case BEDROCK:
+                return 7;
+            case CHEST:
+                return 54;
+            case FURNACE:
+                return 61;
+            case CRAFTING_TABLE:
+                return 58;
+            case DOOR:
+                return 64;
+            case TRAPDOOR:
+                return 96;
+            default:
+                return 0;
+        }
     }
 }
