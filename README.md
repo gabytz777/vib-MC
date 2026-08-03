@@ -68,10 +68,11 @@ net.vibmc.permission  — who can do what
 
 ## Version Requirements
 
-| Version | Status | Java | Notes |
-|---------|--------|------|-------|
-| v0.0.2 | ✅ Latest · Stable | 11 or newer | Recommended release; matches this README |
-| v0.0.3 | ⚠️ Pre-release | 8 or newer | Java 8 compatibility build |
+| Status | Version | Requires |
+|:------:|---------|----------|
+| ✅ | v0.0.1 — alpha | Java 21 or newer |
+| ✅ | v0.0.2 — latest, stable | Java 11 or newer |
+| ⚠️ | v0.0.3 — pre-release | Java 8 or newer |
 
 Building from source requires **Java 11 or newer** (`options.release = 11`).
 
