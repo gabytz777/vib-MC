@@ -64,6 +64,16 @@ net.vibmc.plugin      — mod support
 net.vibmc.command     — slash commands
 net.vibmc.permission  — who can do what
 ```
+```
+
+## Version Requirements
+
+| Version | Status | Java | Notes |
+|---------|--------|------|-------|
+| v0.0.2 | ✅ Latest · Stable | 11 or newer | Recommended release; matches this README |
+| v0.0.3 | ⚠️ Pre-release | 8 or newer | Java 8 compatibility build |
+
+Building from source requires **Java 11 or newer** (`options.release = 11`).
 
 ## License
 
