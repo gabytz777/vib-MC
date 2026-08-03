@@ -134,7 +134,7 @@ public class PluginManager {
     }
 
     public void registerEvents(Listener listener, VibMCPlugin plugin) {
-        for (var method : listener.getClass().getMethods()) {
+        for (java.lang.reflect.Method method : listener.getClass().getMethods()) {
             EventHandler annotation = method.getAnnotation(EventHandler.class);
             if (annotation == null) continue;
 

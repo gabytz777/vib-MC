@@ -3,6 +3,7 @@ package net.vibmc.command.commands;
 import net.vibmc.command.Command;
 import net.vibmc.command.CommandSender;
 import net.vibmc.server.VibMC;
+import net.vibmc.world.World;
 
 public class TimeCommand extends Command {
     public TimeCommand() {
@@ -15,7 +16,7 @@ public class TimeCommand extends Command {
             sender.sendMessage("{\"text\":\"§cUsage: /time set <day|night|ticks> | /time add <ticks>\"}");
             return false;
         }
-        var world = VibMC.getInstance().getWorldManager().getMainWorld();
+        World world = VibMC.getInstance().getWorldManager().getMainWorld();
         switch (args[0].toLowerCase()) {
             case "set": {
                 long time;

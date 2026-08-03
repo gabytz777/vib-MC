@@ -6,7 +6,9 @@ import net.vibmc.network.PacketBuffer;
 import net.vibmc.plugin.event.ChatEvent;
 import net.vibmc.plugin.event.PlayerJoinEvent;
 import net.vibmc.plugin.event.PlayerQuitEvent;
+import net.vibmc.plugin.PluginManager;
 import net.vibmc.server.VibMC;
+import net.vibmc.world.Chunk;
 import net.vibmc.world.World;
 import net.vibmc.network.Packet;
 
@@ -27,8 +29,8 @@ public class PlayerManager {
         players.put(player.getUuid(), player);
         byName.put(player.getUsername().toLowerCase(), player);
 
-        var server = VibMC.getInstance();
-        var pluginManager = server.getPluginManager();
+        VibMC server = VibMC.getInstance();
+        PluginManager pluginManager = server.getPluginManager();
 
         PlayerJoinEvent event = new PlayerJoinEvent(player, player.getUsername() + " joined the game");
         pluginManager.fireEvent(event);
@@ -44,8 +46,8 @@ public class PlayerManager {
         players.remove(player.getUuid());
         byName.remove(player.getUsername().toLowerCase());
 
-        var server = VibMC.getInstance();
-        var pluginManager = server.getPluginManager();
+        VibMC server = VibMC.getInstance();
+        PluginManager pluginManager = server.getPluginManager();
 
         if (player.getUsername() != null && !player.getUsername().isEmpty()) {
             PlayerQuitEvent event = new PlayerQuitEvent(player, player.getUsername() + " left the game");
@@ -291,7 +293,7 @@ public class PlayerManager {
     }
 
     private void sendChunk(ClientConnection conn, int chunkX, int chunkZ) {
-        var chunk = VibMC.getInstance().getWorldManager().getMainWorld().getChunk(chunkX, chunkZ);
+        Chunk chunk = VibMC.getInstance().getWorldManager().getMainWorld().getChunk(chunkX, chunkZ);
         if (chunk == null) return;
 
         byte[] chunkData = chunk.toNetworkData();

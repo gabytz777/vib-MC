@@ -11,13 +11,14 @@ public class ListCommand extends Command {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        var players = VibMC.getInstance().getPlayerManager().getOnlinePlayers();
+        java.util.Collection<net.vibmc.entity.PlayerEntity> players =
+                VibMC.getInstance().getPlayerManager().getOnlinePlayers();
         if (players.isEmpty()) {
             sender.sendMessage("{\"text\":\"§7There are no players online.\"}");
             return true;
         }
         StringBuilder names = new StringBuilder();
-        for (var player : players) {
+        for (net.vibmc.entity.PlayerEntity player : players) {
             if (names.length() > 0) names.append("§7, ");
             names.append("§a").append(player.getUsername());
         }

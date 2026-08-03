@@ -2,6 +2,7 @@ package net.vibmc.permission;
 
 import net.vibmc.entity.PlayerEntity;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -31,6 +32,6 @@ public class PermissionManager {
     }
 
     public Set<String> getPermissions(PlayerEntity player) {
-        return permissions.getOrDefault(player.getUuid(), Set.of());
+        return permissions.getOrDefault(player.getUuid(), Collections.emptySet());
     }
 }

@@ -2,6 +2,7 @@ package net.vibmc.command;
 
 import net.vibmc.command.commands.*;
 import net.vibmc.entity.PlayerEntity;
+import net.vibmc.permission.PermissionManager;
 import net.vibmc.server.VibMC;
 
 import java.util.HashMap;
@@ -60,8 +61,8 @@ public class CommandManager {
 
         if (command.getPermission() != null && !command.getPermission().isEmpty()) {
             if (sender.isPlayer()) {
-                var player = sender.getPlayer();
-                var permManager = VibMC.getInstance().getPluginManager().getPermissionManager();
+                PlayerEntity player = sender.getPlayer();
+                PermissionManager permManager = VibMC.getInstance().getPluginManager().getPermissionManager();
                 if (!permManager.hasPermission(player, command.getPermission())) {
                     sender.sendMessage("{\"text\":\"§cYou don't have permission to use this command.\"}");
                     return false;
