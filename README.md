@@ -8,10 +8,11 @@
 [![Java](https://img.shields.io/badge/Java-11-green?style=for-the-badge&logo=java)]()
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.12.2-blue?style=for-the-badge&logo=minecraft)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)]()
+[![Release](https://img.shields.io/badge/Release-v0.0.2--pre--release-9cf?style=for-the-badge)]()
 
 **vibed into existence** — a Minecraft server made entirely by AI, one prompt at a time.
 
-> ⚠️ **Work in Progress** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
+> ⚠️ **Pre-release** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
 
 </div>
 
@@ -40,7 +41,7 @@
 ## Quick Start
 
 ```bash
-./gradlew build
+gradle build
 java -jar build/libs/vib-mc.jar
 ```
 
@@ -61,8 +62,6 @@ net.vibmc.entity      — things that move
 net.vibmc.player      — the people
 net.vibmc.plugin      — mod support
 net.vibmc.command     — slash commands
-net.vibmc.scheduler   — tick tock
-net.vibmc.scoreboard  — numbers
 net.vibmc.permission  — who can do what
 ```
 
