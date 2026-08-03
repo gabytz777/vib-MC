@@ -8,11 +8,11 @@
 [![Java](https://img.shields.io/badge/Java-8-yellow?style=for-the-badge&logo=java)]()
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.12.2-blue?style=for-the-badge&logo=minecraft)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)]()
-[![Release](https://img.shields.io/badge/Release-v0.0.2--pre--release-9cf?style=for-the-badge)]()
+[![Release](https://img.shields.io/badge/Release-v0.0.2-blue?style=for-the-badge)](https://github.com/gabytz777/vib-MC/releases/tag/v0.0.2)
 
 **vibed into existence** — a Minecraft server made entirely by AI, one prompt at a time.
 
-> ⚠️ **Pre-release** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
+> ⚠️ **Latest release: v0.0.2** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
 
 </div>
 
