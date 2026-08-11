@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vib-MC - a Minecraft server, vibed into existence</title>
+  <meta name="description" content="vib-MC is a Minecraft server (1.12.2, protocol 340) written entirely by AI, one prompt at a time. It connects. Sometimes.">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    (function () {
+      var stored = null;
+      try { stored = localStorage.getItem("vibmc-theme"); } catch (e) {}
+      var dark = stored ? stored === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.classList.toggle("dark", dark);
+    })();
+  </script>
+</head>
+<body class="bg-stone-100 dark:bg-stone-950 text-stone-800 dark:text-stone-200 font-sans antialiased transition-colors duration-300">
+  <a href="#status" class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:px-4 focus:py-2 focus:bg-emerald-600 focus:text-white focus:rounded-md">Skip to status</a>
+
+  <header class="sticky top-0 z-40 border-b border-stone-200/80 dark:border-stone-800/80 bg-stone-100/85 dark:bg-stone-950/85 backdrop-blur-md">
+    <div class="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-2 font-mono text-sm font-semibold tracking-tight">
+        <span class="inline-block w-2.5 h-2.5 rounded-[2px] bg-emerald-500"></span>
+        vib-MC
+      </a>
+      <nav class="hidden md:flex items-center gap-7 text-sm font-medium">
+        <a href="#status" class="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">Status</a>
+        <a href="#commands" class="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">Commands</a>
+        <a href="#architecture" class="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">Architecture</a>
+        <a href="#versions" class="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">Versions</a>
+      </nav>
+      <div class="flex items-center gap-3">
+        <button id="theme-toggle" type="button" aria-label="Toggle color theme" class="font-mono text-xs px-3 py-1.5 border border-stone-300 dark:border-stone-700 rounded-md hover:border-emerald-600 dark:hover:border-emerald-500 transition-colors">
+          <span data-theme-icon="dark" class="dark:hidden">dark</span>
+          <span data-theme-icon="light" class="hidden dark:inline">light</span>
+        </button>
+        <a href="https://github.com/gabytz777/vib-MC/releases" class="px-3.5 py-2 text-sm font-semibold rounded-md bg-emerald-600 text-white hover:bg-emerald-500 active:scale-[0.98] transition-all whitespace-nowrap">Get the jar</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="max-w-6xl mx-auto px-4 md:px-6 pt-16 md:pt-20 pb-20 md:pb-28">
+      <div class="grid md:grid-cols-[1.15fr_0.85fr] gap-12 md:gap-16 items-center">
+        <div>
+          <p class="font-mono text-xs uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-400 mb-5 motion-safe:animate-rise">
+            Java 11 - protocol 340 - MIT
+          </p>
+          <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter leading-[1.05] motion-safe:animate-rise">
+            A Minecraft server, <em class="italic font-semibold pb-1 leading-[1.1]">vibed</em> into existence.
+          </h1>
+          <p class="mt-6 text-base md:text-lg leading-relaxed text-stone-600 dark:text-stone-400 max-w-[55ch] motion-safe:animate-rise" style="animation-delay: 0.1s">
+            Written entirely by an AI, one prompt at a time. No human wrote a line of it. It connects, generates terrain, and occasionally works.
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3 motion-safe:animate-rise" style="animation-delay: 0.2s">
+            <a href="https://github.com/gabytz777/vib-MC/releases" class="px-5 py-3 text-sm font-semibold rounded-md bg-emerald-600 text-white hover:bg-emerald-500 active:scale-[0.98] transition-all">Download v0.0.2</a>
+            <a href="https://github.com/gabytz777/vib-MC" class="px-5 py-3 text-sm font-semibold rounded-md border border-stone-300 dark:border-stone-700 hover:border-emerald-600 dark:hover:border-emerald-500 transition-colors">Browse the source</a>
+          </div>
+        </div>
+
+        <aside id="status" class="font-mono text-[13px] leading-relaxed rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/70 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.25)] motion-safe:animate-rise" style="animation-delay: 0.15s">
+          <div class="flex items-center justify-between px-4 py-3 border-b border-stone-200 dark:border-stone-800">
+            <span class="font-semibold text-emerald-700 dark:text-emerald-400">feature status</span>
+            <span class="text-[11px] text-stone-500 dark:text-stone-400">live from the repo</span>
+          </div>
+          <ul class="p-4 space-y-2.5">
+            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span><span class="text-stone-500 dark:text-stone-400">starts</span><span class="ml-auto text-emerald-700 dark:text-emerald-400">yes</span></li>
+            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span><span class="text-stone-500 dark:text-stone-400">players can join</span><span class="ml-auto text-emerald-700 dark:text-emerald-400">yes</span></li>
+            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span><span class="text-stone-500 dark:text-stone-400">terrain generates</span><span class="ml-auto text-emerald-700 dark:text-emerald-400">somewhere</span></li>
+            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span><span class="text-stone-500 dark:text-stone-400">terrain renders</span><span class="ml-auto text-amber-600 dark:text-amber-400">void</span></li>
+            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></span><span class="text-stone-500 dark:text-stone-400">camera moves</span><span class="ml-auto text-amber-600 dark:text-amber-400">broken</span></li>
+            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span><span class="text-stone-500 dark:text-stone-400">plugin api</span><span class="ml-auto text-emerald-700 dark:text-emerald-400">yes</span></li>
+            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span><span class="text-stone-500 dark:text-stone-400">mobs that exist</span><span class="ml-auto text-emerald-700 dark:text-emerald-400">yes</span></li>
+            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-stone-400 shrink-0"></span><span class="text-stone-500 dark:text-stone-400">nether</span><span class="ml-auto text-stone-400 dark:text-stone-500">who needs it</span></li>
+          </ul>
+        </aside>
+      </div>
+    </section>
+
+    <section class="border-t border-stone-200 dark:border-stone-800">
+      <div class="max-w-6xl mx-auto px-4 md:px-6 py-20 md:py-24">
+        <div class="max-w-2xl">
+          <h2 class="text-3xl md:text-4xl font-bold tracking-tighter">Quick start</h2>
+          <p class="mt-4 text-stone-600 dark:text-stone-400 leading-relaxed">Grab Java 11 or newer, build, and run. The server listens on port 25565 and does its best.</p>
+        </div>
+        <div class="mt-10 font-mono text-[13px] md:text-sm leading-relaxed rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/70 p-5 overflow-x-auto">
+          <p><span class="text-stone-400">$</span> <span class="text-emerald-700 dark:text-emerald-400">gradle build</span></p>
+          <p class="mt-2"><span class="text-stone-400">$</span> <span class="text-emerald-700 dark:text-emerald-400">java -jar</span> build/libs/vib-mc.jar</p>
+          <p class="mt-4 text-stone-500 dark:text-stone-500">[vib-mc] starting server on 25565...</p>
+          <p class="text-stone-500 dark:text-stone-500">[vib-mc] terrain generating... somewhere.</p>
+          <p class="text-stone-500 dark:text-stone-500">[vib-mc] camera status: believes it is moving.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="commands" class="border-t border-stone-200 dark:border-stone-800">
+      <div class="max-w-6xl mx-auto px-4 md:px-6 py-20 md:py-24">
+        <div class="max-w-2xl">
+          <h2 class="text-3xl md:text-4xl font-bold tracking-tighter">Commands</h2>
+          <p class="mt-4 text-stone-600 dark:text-stone-400 leading-relaxed">Twelve slash commands. Enough to admin a server, barely enough to play one.</p>
+        </div>
+        <div class="mt-10 grid md:grid-cols-2 gap-px rounded-xl overflow-hidden border border-stone-200 dark:border-stone-800 bg-stone-200 dark:bg-stone-800">
+          <div class="bg-stone-100 dark:bg-stone-900 p-6 flex flex-col gap-4">
+            <span class="font-mono text-xs text-stone-500 dark:text-stone-400">players</span>
+            <a href="https://github.com/gabytz777/vib-MC/blob/main/src/main/java/net/vibmc/command/commands/TeleportCommand.java" class="font-mono text-sm hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">/tp</a>
+            <a href="https://github.com/gabytz777/vib-MC/blob/main/src/main/java/net/vibmc/command/commands/GamemodeCommand.java" class="font-mono text-sm hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">/gamemode</a>
+            <a href="https://github.com/gabytz777/vib-MC/blob/main/src/main/java/net/vibmc/command/commands/GiveCommand.java" class="font-mono text-sm hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">/give</a>
+            <a href="https://github.com/gabytz777/vib-MC/blob/main/src/main/java/net/vibmc/command/commands/KillCommand.java" class="font-mono text-sm hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">/kill</a>
+            <a href="https://github.com/gabytz777/vib-MC/blob/main/src/main/java/net/vibmc/command/commands/ListCommand.java" class="font-mono text-sm hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">/list</a>
+          </div>
+          <div class="bg-stone-100 dark:bg-stone-900 p-6 flex flex-col gap-4">
+            <span class="font-mono text-xs text-stone-500 dark:text-stone-400">world + admin</span>
+            <a href="https://github.com/gabytz777/vib-MC/blob/main/src/main/java/net/vibmc/command/commands/TimeCommand.java" class="font-mono text-sm hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">/time</a>
+            <a href="https://github.com/gabytz777/vib-MC/blob/main/src/main/java/net/vibmc/command/commands/WeatherCommand.java" class="font-mono text-sm hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">/weather</a>
+            <a href="https://github.com/gabytz777/vib-MC/blob/main/src/main/java/net/vibmc/command/commands/SeedCommand.java" class="font-mono text-sm hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">/seed</a>
+            <a href="https://github.com/gabytz777/vib-MC/blob/main/src/main/java/net/vibmc/command/commands/SayCommand.java" class="font-mono text-sm hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">/say</a>
+            <a href="https://github.com/gabytz777/vib-MC/blob/main/src/main/java/net/vibmc/command/commands/SaveAllCommand.java" class="font-mono text-sm hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">/save-all</a>
+            <a href="https://github.com/gabytz777/vib-MC/blob/main/src/main/java/net/vibmc/command/commands/StopCommand.java" class="font-mono text-sm hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">/stop</a>
+            <a href="https://github.com/gabytz777/vib-MC/blob/main/src/main/java/net/vibmc/command/commands/HelpCommand.java" class="font-mono text-sm hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">/help</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture" class="border-t border-stone-200 dark:border-stone-800">
+      <div class="max-w-6xl mx-auto px-4 md:px-6 py-20 md:py-24">
+        <div class="max-w-2xl">
+          <h2 class="text-3xl md:text-4xl font-bold tracking-tighter">Architecture</h2>
+          <p class="mt-4 text-stone-600 dark:text-stone-400 leading-relaxed">Nine packages, each doing one job with various amounts of confidence.</p>
+        </div>
+        <div class="mt-10 grid lg:grid-cols-[0.9fr_1.1fr] gap-10 lg:gap-16 items-start">
+          <pre class="font-mono text-[13px] leading-[1.9] rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/70 p-5 overflow-x-auto"><span class="text-emerald-700 dark:text-emerald-400">net.vibmc</span>
+<span class="text-stone-400">|--</span> <span class="text-stone-500 dark:text-stone-400">server</span>   <span class="text-stone-300 dark:text-stone-600">makes it go</span>
+<span class="text-stone-400">|--</span> <span class="text-stone-500 dark:text-stone-400">network</span>  <span class="text-stone-300 dark:text-stone-600">talks to minecraft</span>
+<span class="text-stone-400">|--</span> <span class="text-stone-500 dark:text-stone-400">world</span>     <span class="text-stone-300 dark:text-stone-600">blocks and stuff</span>
+<span class="text-stone-400">|--</span> <span class="text-stone-500 dark:text-stone-400">world.gen</span> <span class="text-stone-300 dark:text-stone-600">makes the ground</span>
+<span class="text-stone-400">|--</span> <span class="text-stone-500 dark:text-stone-400">entity</span>   <span class="text-stone-300 dark:text-stone-600">things that move</span>
+<span class="text-stone-400">|--</span> <span class="text-stone-500 dark:text-stone-400">player</span>   <span class="text-stone-300 dark:text-stone-600">the people</span>
+<span class="text-stone-400">|--</span> <span class="text-stone-500 dark:text-stone-400">plugin</span>   <span class="text-stone-300 dark:text-stone-600">mod support</span>
+<span class="text-stone-400">|--</span> <span class="text-stone-500 dark:text-stone-400">command</span>  <span class="text-stone-300 dark:text-stone-600">slash commands</span>
+<span class="text-stone-400">`--</span> <span class="text-stone-500 dark:text-stone-400">permission</span> <span class="text-stone-300 dark:text-stone-600">who can do what</span></pre>
+          <div>
+            <ul class="flex flex-col gap-6">
+              <li>
+                <h3 class="font-mono text-sm font-semibold text-emerald-700 dark:text-emerald-400">plugin system</h3>
+                <p class="mt-2 text-sm leading-relaxed text-stone-600 dark:text-stone-400">Real events (join, quit, chat, tick), cancellation, priorities, and a loader. Written like the server actually needs it, because it does.</p>
+              </li>
+              <li>
+                <h3 class="font-mono text-sm font-semibold text-emerald-700 dark:text-emerald-400">network stack</h3>
+                <p class="mt-2 text-sm leading-relaxed text-stone-600 dark:text-stone-400">Handshake, login, status, and play handlers speaking protocol 340. The part that makes real Minecraft clients say hello.</p>
+              </li>
+              <li>
+                <h3 class="font-mono text-sm font-semibold text-emerald-700 dark:text-emerald-400">world pipeline</h3>
+                <p class="mt-2 text-sm leading-relaxed text-stone-600 dark:text-stone-400">Chunks generate, get patched, and stream out to clients. The rendering side is where the vibes currently lose.</p>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="versions" class="border-t border-stone-200 dark:border-stone-800">
+      <div class="max-w-6xl mx-auto px-4 md:px-6 py-20 md:py-24">
+        <div class="max-w-2xl">
+          <h2 class="text-3xl md:text-4xl font-bold tracking-tighter">Versions</h2>
+          <p class="mt-4 text-stone-600 dark:text-stone-400 leading-relaxed">Three releases, three Java minimums, one shared belief that it will work eventually.</p>
+        </div>
+        <div class="mt-10 grid md:grid-cols-3 gap-4">
+          <a href="https://github.com/gabytz777/vib-MC/releases" class="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/70 p-6 flex flex-col gap-3 hover:border-emerald-600 dark:hover:border-emerald-500 transition-colors group">
+            <span class="font-mono text-[11px] uppercase tracking-[0.18em] text-stone-500 dark:text-stone-400">alpha</span>
+            <span class="font-mono text-2xl font-semibold group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">v0.0.1</span>
+            <span class="text-sm text-stone-600 dark:text-stone-400">Requires Java 21. The ancestor.</span>
+          </a>
+          <a href="https://github.com/gabytz777/vib-MC/releases" class="rounded-xl border-2 border-emerald-600 dark:border-emerald-500 bg-stone-50 dark:bg-stone-900/70 p-6 flex flex-col gap-3 hover:bg-stone-100 dark:hover:bg-stone-900 transition-colors">
+            <span class="font-mono text-[11px] uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-400">latest, stable</span>
+            <span class="font-mono text-2xl font-semibold text-emerald-700 dark:text-emerald-400">v0.0.2</span>
+            <span class="text-sm text-stone-600 dark:text-stone-400">Requires Java 11 or newer. The one to download.</span>
+          </a>
+          <a href="https://github.com/gabytz777/vib-MC/releases" class="rounded-xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/70 p-6 flex flex-col gap-3 hover:border-emerald-600 dark:hover:border-emerald-500 transition-colors group">
+            <span class="font-mono text-[11px] uppercase tracking-[0.18em] text-stone-500 dark:text-stone-400">pre-release</span>
+            <span class="font-mono text-2xl font-semibold group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">v0.0.3</span>
+            <span class="text-sm text-stone-600 dark:text-stone-400">Requires Java 8 or newer. The future.</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="border-t border-stone-200 dark:border-stone-800">
+      <div class="max-w-6xl mx-auto px-4 md:px-6 py-20 md:py-24 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold tracking-tighter max-w-xl mx-auto">No humans were involved in writing this server.</h2>
+        <p class="mt-4 text-stone-600 dark:text-stone-400 max-w-md mx-auto">That is the feature. That is also the bug.</p>
+        <div class="mt-8 flex flex-wrap justify-center gap-3">
+          <a href="https://github.com/gabytz777/vib-MC/releases" class="px-5 py-3 text-sm font-semibold rounded-md bg-emerald-600 text-white hover:bg-emerald-500 active:scale-[0.98] transition-all">Download v0.0.2</a>
+          <a href="https://github.com/gabytz777/vib-MC" class="px-5 py-3 text-sm font-semibold rounded-md border border-stone-300 dark:border-stone-700 hover:border-emerald-600 dark:hover:border-emerald-500 transition-colors">Star the repo</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-stone-200 dark:border-stone-800">
+    <div class="max-w-6xl mx-auto px-4 md:px-6 py-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <p class="font-mono text-xs text-stone-500 dark:text-stone-400">vib-MC - MIT licensed. Vibecoded, so warranty is a suggestion.</p>
+      <p class="font-mono text-xs text-stone-500 dark:text-stone-400">
+        <a href="https://github.com/gabytz777/vib-MC" class="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">source</a>
+        <span class="mx-2">/</span>
+        <a href="https://github.com/gabytz777/vib-MC/releases" class="hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors">releases</a>
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    var toggle = document.getElementById("theme-toggle");
+    toggle.addEventListener("click", function () {
+      var dark = document.documentElement.classList.toggle("dark");
+      try { localStorage.setItem("vibmc-theme", dark ? "dark" : "light"); } catch (e) {}
+    });
+  </script>
+</body>
+</html>

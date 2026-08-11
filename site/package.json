@@ -1,0 +1,17 @@
+{
+  "name": "vib-mc-site",
+  "version": "1.0.0",
+  "description": "Documentation site for vib-MC, a Minecraft server vibed into existence",
+  "private": true,
+  "scripts": {
+    "build": "npx @tailwindcss/cli -i src/input.css -o styles.css --minify",
+    "dev": "npx @tailwindcss/cli -i src/input.css -o styles.css --watch",
+    "start": "serve . -l 3000"
+  },
+  "devDependencies": {
+    "@fontsource-variable/geist": "^5.2.8",
+    "@fontsource-variable/geist-mono": "^5.2.8",
+    "@tailwindcss/cli": "^4.3.3",
+    "serve": "^14.2.6"
+  }
+}

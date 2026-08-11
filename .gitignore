@@ -12,3 +12,5 @@ out/
 # Runtime data
 world/
 plugins/
+
+site/node_modules/
