@@ -35,6 +35,8 @@ body:
   - type: textarea
     id: log
     attributes:
-      label: Server log
-      description: Paste the log or link to it (e.g. mclo.gs).
-      placeholder: "latest.log or a mclo.gs link"
+      label: Server log output
+      description: Paste the raw log output from the server console (not a file name or link).
+      placeholder: |
+        [12:34:56] [Server thread/INFO]: Starting minecraft server...
+        [12:34:56] [Server thread/ERROR]: Crash! it broke
