@@ -1,0 +1,40 @@
+name: Bug report
+description: Report a bug in vib-MC
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: input
+    id: short
+    attributes:
+      label: The issue in one short sentence
+      placeholder: "e.g. server crashes when I run /give"
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What's the issue?
+      placeholder: What you saw, what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How did it occur?
+      description: Steps so we can replicate it.
+      placeholder: "1. started the server\n2. ran /give\n3. crash"
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Release version
+      placeholder: e.g. v0.0.2
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: Server log
+      description: Paste the log or link to it (e.g. mclo.gs).
+      placeholder: "latest.log or a mclo.gs link"
