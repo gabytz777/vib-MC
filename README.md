@@ -8,11 +8,11 @@
 [![Java](https://img.shields.io/badge/Java-11-green?style=for-the-badge&logo=java)]()
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.12.2-blue?style=for-the-badge&logo=minecraft)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)]()
-[![Release](https://img.shields.io/badge/Release-v0.0.2-blue?style=for-the-badge)](https://github.com/gabytz777/vib-MC/releases/tag/v0.0.2)
+[![Release](https://img.shields.io/badge/Release-v0.0.3-blue?style=for-the-badge)](https://github.com/gabytz777/vib-MC/releases/tag/v0.0.3)
 
 **vibed into existence** — a Minecraft server made entirely by AI, one prompt at a time.
 
-> ⚠️ **Latest release: v0.0.2** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
+> ⚠️ **Latest release: v0.0.3** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
 
 </div>
 
@@ -36,7 +36,8 @@
 
 ## Requirements
 
-- **Java 11 or newer**
+- **Java 8 or newer** to run v0.0.3
+- **Java 11 or newer** to build from source
 
 ## Quick Start
 
@@ -71,8 +72,8 @@ net.vibmc.permission  — who can do what
 | Status | Version | Requires |
 |:------:|---------|----------|
 | ✅ | v0.0.1 — alpha | Java 21 or newer |
-| ✅ | v0.0.2 — latest, stable | Java 11 or newer |
-| ⚠️ | v0.0.3 — pre-release | Java 8 or newer |
+| ✅ | v0.0.2 — stable | Java 11 or newer |
+| ✅ | v0.0.3 — latest, stable | Java 8 or newer |
 
 Building from source requires **Java 11 or newer** (`options.release = 11`).
 
