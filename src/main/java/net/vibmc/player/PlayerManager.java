@@ -13,6 +13,7 @@ import net.vibmc.world.Chunk;
 import net.vibmc.world.World;
 import net.vibmc.network.Packet;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -39,6 +40,12 @@ public class PlayerManager {
 
         server.getLogger().info("Player spawn at %.1f, %.1f, %.1f (chunk %d, %d)", player.getX(), player.getY(), player.getZ(), (int) Math.floor(player.getX()) >> 4, (int) Math.floor(player.getZ()) >> 4);
         sendJoinPackets(player);
+        sendPlayerInfo(player.getConnection(), 0, players.values());
+        for (PlayerEntity other : players.values()) {
+            if (other != player) {
+                sendPlayerInfo(other.getConnection(), 0, Collections.singletonList(player));
+            }
+        }
         broadcastMessage("{\"text\":\"§e" + player.getUsername() + " joined the game\"}");
     }
 
@@ -55,6 +62,9 @@ public class PlayerManager {
 
             server.getLogger().info("%s left the game", player.getUsername());
             broadcastMessage("{\"text\":\"§e" + player.getUsername() + " left the game\"}");
+            for (PlayerEntity other : players.values()) {
+                sendPlayerInfo(other.getConnection(), 4, Collections.singletonList(player));
+            }
         }
     }
 
@@ -186,6 +196,48 @@ public class PlayerManager {
         player.setLoadedChunk(centerX, centerZ);
 
         sendGameState(conn);
+    }
+
+    private String texturesProperty(PlayerEntity player) {
+        String url = VibMC.getInstance().getConfig().skinUrlFor(player.getUsername());
+        if (url.isEmpty()) return null;
+        String json = "{\"timestamp\":" + System.currentTimeMillis()
+                + ",\"profileId\":\"" + player.getUuid() + "\""
+                + ",\"profileName\":\"" + player.getUsername() + "\""
+                + ",\"textures\":{\"SKIN\":{\"url\":\"" + url.replace("\"", "") + "\"}}}";
+        return Base64.getEncoder().encodeToString(json.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void sendPlayerInfo(ClientConnection conn, int action, Collection<PlayerEntity> targets) {
+        List<PlayerEntity> list = new ArrayList<>(targets);
+        conn.sendPacket(new Packet() {
+            public int getPacketId() { return 0x04; }
+            public void read(PacketBuffer b) {}
+            public void write(PacketBuffer b) {
+                b.writeVarInt(action);
+                b.writeVarInt(list.size());
+                for (PlayerEntity p : list) {
+                    UUID uuid = p.getUuid();
+                    b.writeLong(uuid.getMostSignificantBits());
+                    b.writeLong(uuid.getLeastSignificantBits());
+                    if (action == 0) {
+                        b.writeString(p.getUsername());
+                        String textures = texturesProperty(p);
+                        if (textures == null) {
+                            b.writeVarInt(0);
+                        } else {
+                            b.writeVarInt(1);
+                            b.writeString("textures");
+                            b.writeString(textures);
+                            b.writeBoolean(false);
+                        }
+                        b.writeVarInt(p.getGameMode());
+                        b.writeVarInt(0);
+                        b.writeBoolean(false);
+                    }
+                }
+            }
+        });
     }
 
     private void sendLoginPlay(ClientConnection conn, PlayerEntity player) {

@@ -67,6 +67,20 @@ public class ServerConfig {
         return getString("difficulty", "easy");
     }
 
+    public String skinUrl() {
+        return getString("skin-url", "").trim();
+    }
+
+    public String skinUrlFor(String username) {
+        if (username != null) {
+            String perPlayer = properties.getProperty("skin-url." + username.toLowerCase());
+            if (perPlayer != null && !perPlayer.trim().isEmpty()) {
+                return perPlayer.trim();
+            }
+        }
+        return skinUrl();
+    }
+
     private String getString(String key, String def) {
         return properties.getProperty(key, def);
     }
