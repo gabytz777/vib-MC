@@ -1,5 +1,6 @@
 package net.vibmc.player;
 
+import net.vibmc.command.CommandSender;
 import net.vibmc.entity.PlayerEntity;
 import net.vibmc.network.ClientConnection;
 import net.vibmc.network.PacketBuffer;
@@ -97,6 +98,11 @@ public class PlayerManager {
     }
 
     public void handleChat(PlayerEntity sender, String message) {
+        if (message.startsWith("/")) {
+            VibMC.getInstance().getCommandManager().execute(new CommandSender(sender), message);
+            return;
+        }
+
         ChatEvent event = new ChatEvent(sender, message);
         VibMC.getInstance().getPluginManager().fireEvent(event);
         if (event.isCancelled()) return;
