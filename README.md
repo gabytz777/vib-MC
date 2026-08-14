@@ -7,11 +7,11 @@
 [![Vibecoded](https://img.shields.io/badge/Vibecoded-ff69b4?style=for-the-badge)]()
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.12.2-blue?style=for-the-badge&logo=minecraft)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)]()
-[![Release](https://img.shields.io/badge/Release-v0.0.4--hotfix.1-blue?style=for-the-badge)](https://github.com/gabytz777/vib-MC/releases/tag/v0.0.4-hotfix.1)
+[![Release](https://img.shields.io/badge/Release-v0.0.4--hotfix.2-blue?style=for-the-badge)](https://github.com/gabytz777/vib-MC/releases/tag/v0.0.4-hotfix.2)
 
 **vibed into existence** — a Minecraft server made entirely by AI, one prompt at a time.
 
-> ⚠️ **Latest release: v0.0.4-hotfix.1** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
+> ⚠️ **Latest release: v0.0.4-hotfix.2** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
 
 </div>
 
@@ -30,8 +30,12 @@
 - **Protocol fixes** — client status (respawn), client settings, teleport confirm, plugin messages, keep-alive, and position packets handled at the correct 1.12.2 IDs
 - **Andesite/diorite wired up** — stone metadata states (stone:3 diorite, stone:5 andesite) now map correctly on the wire
 
-## v0.0.4-hotfix.1 — hotfix for ALL versions
+## Hotfixes — apply to ALL versions
 
+### v0.0.4-hotfix.2
+- **The client actually switches game mode** — `/gamemode` and plugin commands that call `setGameMode` now send the Change Game State packet (0x1E, reason 3) so the creative/spectator UI switch happens in-game instead of only changing server state. Applies to every release: v0.0.1 through v0.0.4.
+
+### v0.0.4-hotfix.1
 - **Slash commands actually execute** — chat messages starting with `/` are now routed to the command system instead of being broadcast as chat, so `/gamemode`, `/tp`, `/time`, `/weather`, `/give` and plugin commands work in-game for the first time. This fix applies to every release: v0.0.1 through v0.0.4.
 
 ## Features
@@ -50,7 +54,7 @@
 
 ## Requirements
 
-- **Java 8 or newer** to run v0.0.4-hotfix.1 (and every release from v0.0.3 up)
+- **Java 8 or newer** to run v0.0.4-hotfix.2 (and every release from v0.0.3 up)
 - **Java 8 or newer** to build from source
 
 ## Quick Start
@@ -88,7 +92,8 @@ net.vibmc.permission  — who can do what
 | ✅ | v0.0.2 — stable | Java 11 or newer |
 | ✅ | v0.0.3 — stable | Java 8 or newer |
 | ✅ | v0.0.4 — stable | Java 8 or newer |
-| ✅ | v0.0.4-hotfix.1 — latest, stable (hotfix applies to all versions) | Java 8 or newer |
+| ✅ | v0.0.4-hotfix.1 — stable (hotfix applies to all versions) | Java 8 or newer |
+| ✅ | v0.0.4-hotfix.2 — latest, stable (hotfix applies to all versions) | Java 8 or newer |
 
 Building from source requires **Java 8 or newer** (`options.release = 8`).
 
