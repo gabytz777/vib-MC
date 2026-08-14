@@ -162,6 +162,22 @@ public class PlayerEntity extends Entity {
 
     public void setGameMode(GameMode gameMode) {
         this.gameMode = gameMode;
+        sendPacket(new Packet() {
+            @Override
+            public int getPacketId() {
+                return 0x1E; // Change Game State
+            }
+
+            @Override
+            public void read(PacketBuffer b) {
+            }
+
+            @Override
+            public void write(PacketBuffer b) {
+                b.writeByte(3); // reason: change game mode
+                b.writeFloat(gameMode.getId());
+            }
+        });
     }
 
     public boolean isFlying() {

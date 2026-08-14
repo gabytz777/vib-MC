@@ -12,6 +12,7 @@ out/
 # Runtime data
 /world/
 /plugins/
+/plugins-dev/
 
 # Local screenshots (not committed)
 /image.png
