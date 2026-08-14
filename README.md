@@ -7,13 +7,15 @@
 [![Vibecoded](https://img.shields.io/badge/Vibecoded-ff69b4?style=for-the-badge)]()
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.12.2-blue?style=for-the-badge&logo=minecraft)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)]()
-[![Release](https://img.shields.io/badge/Release-v0.0.3-blue?style=for-the-badge)](https://github.com/gabytz777/vib-MC/releases/tag/v0.0.3)
+[![Release](https://img.shields.io/badge/Release-v0.0.4-blue?style=for-the-badge)](https://github.com/gabytz777/vib-MC/releases/tag/v0.0.4)
 
 **vibed into existence** — a Minecraft server made entirely by AI, one prompt at a time.
 
-> ⚠️ **Latest release: v0.0.3** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
+> ⚠️ **Latest release: v0.0.4** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
 
 </div>
+
+![vib-MC screenshot](image.png)
 
 ---
 
@@ -26,8 +28,8 @@
 | ✅ | Actually starts |
 | ✅ | People can join |
 | ✅ | Terrain generates (somewhere) |
-| ⚠️ | Terrain renders (chunk format patched, client still sees void) |
-| ⚠️ | Camera moves (chunk streaming added, still broken) |
+| ✅ | Terrain renders (13-bit chunk data, vanilla client sees it) |
+| ✅ | Camera moves (chunk streaming works) |
 | ✅ | Plugin API |
 | ✅ | Mobs that exist |
 | ❌ | Nether (who needs it) |
@@ -35,7 +37,7 @@
 
 ## Requirements
 
-- **Java 8 or newer** to run v0.0.3
+- **Java 8 or newer** to run v0.0.4
 - **Java 8 or newer** to build from source
 
 ## Quick Start
