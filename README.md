@@ -17,7 +17,7 @@
 
 ---
 
-`vib-MC` is a Minecraft server (protocol 340 / 1.12.2) that was **entirely vibecoded by AI**. No human wrote any of this. It connects, generates terrain, and occasionally works. The latest release runs on Java 8 or newer; building from source needs Java 11.
+`vib-MC` is a Minecraft server (protocol 340 / 1.12.2) that was **entirely vibecoded by AI**. No human wrote any of this. It connects, generates terrain, and occasionally works. The latest release runs on Java 8 or newer, and so does building from source.
 
 ## Features
 
@@ -36,7 +36,7 @@
 ## Requirements
 
 - **Java 8 or newer** to run v0.0.3
-- **Java 11 or newer** to build from source
+- **Java 8 or newer** to build from source
 
 ## Quick Start
 
@@ -73,7 +73,7 @@ net.vibmc.permission  — who can do what
 | ✅ | v0.0.2 — stable | Java 11 or newer |
 | ✅ | v0.0.3 — latest, stable | Java 8 or newer |
 
-Building from source requires **Java 11 or newer** (`options.release = 11`).
+Building from source requires **Java 8 or newer** (`options.release = 8`).
 
 ## License
 
