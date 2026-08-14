@@ -178,6 +178,32 @@ public class PlayerEntity extends Entity {
                 b.writeFloat(gameMode.getId());
             }
         });
+        // sync abilities so the client actually flies/noclips: spectator = invulnerable + flying,
+        // creative = can fly
+        int flags = 0;
+        if (gameMode == GameMode.SPECTATOR) {
+            flags |= 0x01 | 0x02 | 0x04;
+        } else if (gameMode == GameMode.CREATIVE) {
+            flags |= 0x04;
+        }
+        int finalFlags = flags;
+        sendPacket(new Packet() {
+            @Override
+            public int getPacketId() {
+                return 0x2C; // Player Abilities
+            }
+
+            @Override
+            public void read(PacketBuffer b) {
+            }
+
+            @Override
+            public void write(PacketBuffer b) {
+                b.writeByte(finalFlags);
+                b.writeFloat(0.05f);
+                b.writeFloat(0.1f);
+            }
+        });
     }
 
     public boolean isFlying() {

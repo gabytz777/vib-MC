@@ -25,6 +25,7 @@ public class Chunk {
     public static Chunk generate(World world, int chunkX, int chunkZ) {
         Chunk chunk = new Chunk(world, chunkX, chunkZ);
         TerrainGenerator terrain = new TerrainGenerator(world.seed());
+
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int worldX = chunkX * 16 + x;
@@ -36,20 +37,95 @@ public class Chunk {
 
                 chunk.setBlock(x, 0, z, Block.BEDROCK.id());
                 for (int y = 1; y <= surface - 2; y++) {
-                    chunk.setBlock(x, y, z, stoneMix(terrain, worldX, y, worldZ));
+                    chunk.setBlock(x, y, z, stoneOrOre(terrain, worldX, y, worldZ));
                 }
-                // grass: 2 layers
-                chunk.setBlock(x, surface - 1, z, Block.GRASS.id());
-                chunk.setBlock(x, surface, z, Block.GRASS.id());
-                // water: up to 4 deep
+                // puddle bed: sand instead of grass, water up to 4 deep
                 if (surface < SEA_LEVEL) {
+                    chunk.setBlock(x, surface - 1, z, Block.SAND.id());
+                    chunk.setBlock(x, surface, z, Block.SAND.id());
                     for (int y = surface + 1; y <= SEA_LEVEL; y++) {
                         chunk.setBlock(x, y, z, Block.WATER.id());
+                    }
+                } else {
+                    // grass: 2 layers
+                    chunk.setBlock(x, surface - 1, z, Block.GRASS.id());
+                    chunk.setBlock(x, surface, z, Block.GRASS.id());
+                }
+            }
+        }
+
+        carveCaves(chunk, terrain);
+
+        // trees: ~40% of chunks get one, ~10% get two
+        int roll = terrain.hash(chunkX, chunkZ ^ 0x7E5A) % 100;
+        int trees = roll < 40 ? 1 : (roll < 50 ? 2 : 0);
+        for (int t = 0; t < trees; t++) {
+            int h = terrain.hash(chunkX * 31 + t, chunkZ ^ 0x3F);
+            int x = h % 16;
+            int z = (h / 16) % 16;
+            int topY = -1;
+            for (int y = 15; y >= 1; y--) {
+                if (chunk.getBlock(x, y, z) != Block.AIR.id()) {
+                    topY = y;
+                    break;
+                }
+            }
+            if (topY < 0 || chunk.getBlock(x, topY, z) != Block.GRASS.id()) {
+                continue;
+            }
+            int height = 4 + (terrain.hash(x, z ^ 0x11) % 3); // 4..6
+            placeTree(chunk, terrain, x, topY, z, height);
+        }
+        return chunk;
+    }
+
+    private static void placeTree(Chunk chunk, TerrainGenerator terrain, int x, int topY, int z, int height) {
+        int trunkTop = topY + height;
+        for (int y = topY + 1; y <= trunkTop; y++) {
+            chunk.setBlock(x, y, z, Block.WOOD.id());
+        }
+        // organic canopy: ragged 3x3 blob, random per cell
+        for (int dy = -2; dy <= 1; dy++) {
+            if (dy == -2 && height < 5) {
+                continue; // lowest scatter layer only for tall trees
+            }
+            int y = trunkTop + dy;
+            if (y < 1 || y >= 255) {
+                continue;
+            }
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    if (dx == 0 && dz == 0) {
+                        continue; // trunk column
+                    }
+                    int bx = x + dx;
+                    int bz = z + dz;
+                    if (bx < 0 || bx > 15 || bz < 0 || bz > 15) {
+                        continue;
+                    }
+                    if (chunk.getBlock(bx, y, bz) != Block.AIR.id()) {
+                        continue;
+                    }
+                    int dist = Math.max(Math.abs(dx), Math.abs(dz));
+                    int chance;
+                    if (dy == 1) {
+                        chance = dist == 0 ? 90 : 40;              // ragged cap
+                    } else if (dy == 0) {
+                        chance = dist == 1 ? 75 : 0;                // ring around trunk top
+                    } else if (dy == -1) {
+                        chance = dist == 1 ? 55 : 12;               // fill layer + random nubs
+                    } else {
+                        chance = dist == 1 ? 30 : 10;               // bottom scatter
+                    }
+                    if (chance == 0) {
+                        continue;
+                    }
+                    if (terrain.hash(bx * 517 + y, bz * 433) % 100 < chance) {
+                        chunk.setBlock(bx, y, bz, Block.LEAVES.id());
                     }
                 }
             }
         }
-        return chunk;
     }
 
     private static short stoneMix(TerrainGenerator terrain, int x, int y, int z) {
@@ -66,6 +142,109 @@ public class Chunk {
                 return Block.ANDESITE.id();
             default:
                 return Block.DIORITE.id();
+        }
+    }
+
+    private static short stoneOrOre(TerrainGenerator terrain, int x, int y, int z) {
+        // coal: down to y=8, ~7% of stone blocks; iron: down to y=5, ~4%
+        if (y <= 8 && terrain.hash(x, z ^ (y * 7919)) % 100 < 7) {
+            return Block.COAL_ORE.id();
+        }
+        if (y <= 5 && terrain.hash(x, z ^ (y * 7919) ^ 0x1A2B) % 100 < 4) {
+            return Block.IRON_ORE.id();
+        }
+        return stoneMix(terrain, x, y, z);
+    }
+
+    private static void carveCaves(Chunk chunk, TerrainGenerator terrain) {
+        // ~55% of chunks get one cave worm, ~15% get two
+        int roll = terrain.hash(chunk.chunkX, chunk.chunkZ ^ 0xC0FFEE) % 100;
+        int caves = roll < 55 ? 1 : (roll < 70 ? 2 : 0);
+        for (int c = 0; c < caves; c++) {
+            int h = terrain.hash(chunk.chunkX * 131 + c, chunk.chunkZ ^ 0xBEEF);
+            int x = h % 16;
+            int z = (h / 16) % 16;
+            // ~35% of caves open at the surface (dry land only) and dig down
+            boolean entrance = terrain.hash(chunk.chunkX + c * 7, chunk.chunkZ ^ 0xDEAD) % 100 < 35;
+            int y;
+            int dy = -1;
+            if (entrance) {
+                int topY = -1;
+                for (int yy = 15; yy >= 1; yy--) {
+                    short b = chunk.getBlock(x, yy, z);
+                    if (b != Block.AIR.id() && b != Block.WATER.id()) {
+                        topY = yy;
+                        break;
+                    }
+                }
+                if (topY >= SEA_LEVEL) {
+                    y = topY;
+                } else {
+                    y = 4 + (terrain.hash(x * 7, z * 13) % 8);
+                    entrance = false;
+                }
+            } else {
+                y = 4 + (terrain.hash(x * 7, z * 13) % 8);
+            }
+            int steps = 25 + (terrain.hash(x + c, z * 3) % 25); // 25..49
+            int dx = 0;
+            int dz = 0;
+            for (int s = 0; s < steps; s++) {
+                carvePocket(chunk, x, y, z, 1 + (terrain.hash(x * 31 + s, z * 17 + s) % 2), entrance);
+                int t = terrain.hash(x * 37 + s * 7, z * 53 + s * 3) % 10;
+                if (t < 3) {
+                    dx = 1; dz = 0; dy = 0;
+                } else if (t < 5) {
+                    dx = -1; dz = 0; dy = 0;
+                } else if (t < 7) {
+                    dx = 0; dz = 1; dy = 0;
+                } else if (t < 9) {
+                    dx = 0; dz = -1; dy = 0;
+                } else {
+                    dx = 0; dz = 0;
+                    dy = terrain.hash(x, z ^ s) % 2 == 0 ? 1 : -1;
+                }
+                x += dx;
+                z += dz;
+                y += dy;
+                if (y < 1) {
+                    y = 1;
+                }
+                if (y > 12) {
+                    y = 12;
+                }
+                // bounce off chunk edges so worms stay inside the chunk
+                if (x < 0) { x = 0; }
+                if (x > 15) { x = 15; }
+                if (z < 0) { z = 0; }
+                if (z > 15) { z = 15; }
+            }
+        }
+    }
+
+    private static void carvePocket(Chunk chunk, int cx, int cy, int cz, int radius, boolean entrance) {
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (dx * dx + dy * dy + dz * dz > radius * radius + 1) {
+                        continue; // rough sphere
+                    }
+                    int x = cx + dx;
+                    int y = cy + dy;
+                    int z = cz + dz;
+                    if (x < 0 || x > 15 || z < 0 || z > 15 || y < 1 || y > 13) {
+                        continue;
+                    }
+                    short b = chunk.getBlock(x, y, z);
+                    if (b == Block.STONE.id() || b == Block.ANDESITE.id() || b == Block.DIORITE.id()
+                            || b == Block.COAL_ORE.id() || b == Block.IRON_ORE.id()) {
+                        chunk.setBlock(x, y, z, Block.AIR.id());
+                    } else if (entrance && (b == Block.GRASS.id() || b == Block.SAND.id())) {
+                        // surface caves can breach the top layers
+                        chunk.setBlock(x, y, z, Block.AIR.id());
+                    }
+                }
+            }
         }
     }
 

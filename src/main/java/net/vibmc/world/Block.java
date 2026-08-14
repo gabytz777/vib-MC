@@ -18,7 +18,9 @@ public enum Block {
     GRAVEL((short) 14, 0.6f, 3.0f),
     BEDROCK((short) 15, -1.0f, 3600000.0f),
     ANDESITE((short) 16, 1.5f, 6.0f),
-    DIORITE((short) 17, 1.5f, 6.0f);
+    DIORITE((short) 17, 1.5f, 6.0f),
+    COAL_ORE((short) 18, 3.0f, 5.0f),
+    IRON_ORE((short) 19, 3.0f, 5.0f);
 
     private final short id;
     private final float hardness;
@@ -113,6 +115,10 @@ public enum Block {
             case ANDESITE:
             case DIORITE:
                 return 1; // stone block, differentiated by metadata
+            case COAL_ORE:
+                return 16;
+            case IRON_ORE:
+                return 15;
             default:
                 return 0;
         }
