@@ -5,11 +5,10 @@
 [![Work in Progress](https://img.shields.io/badge/status-WIP-red?style=for-the-badge)]()
 [![AI Generated](https://img.shields.io/badge/AI-Generated-9cf?style=for-the-badge)]()
 [![Vibecoded](https://img.shields.io/badge/Vibecoded-ff69b4?style=for-the-badge)]()
-[![Java](https://img.shields.io/badge/Java-11-green?style=for-the-badge&logo=java)]()
+[![Java](https://img.shields.io/badge/Java-8-runtime-green?style=for-the-badge&logo=java)]()
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.12.2-blue?style=for-the-badge&logo=minecraft)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)]()
 [![Release](https://img.shields.io/badge/Release-v0.0.3-blue?style=for-the-badge)](https://github.com/gabytz777/vib-MC/releases/tag/v0.0.3)
-[![Website](https://img.shields.io/badge/Website-vib-MC-landing-orange?style=for-the-badge)](https://slopmadebymestudios.lol/vibmc.html)
 
 **vibed into existence** — a Minecraft server made entirely by AI, one prompt at a time.
 
@@ -19,7 +18,7 @@
 
 ---
 
-`vib-MC` is a Minecraft server (protocol 340 / 1.12.2) that was **entirely vibecoded by AI**. No human wrote any of this. It connects, generates terrain, and occasionally works. Built with Java 11 because that's what vibes with the project.
+`vib-MC` is a Minecraft server (protocol 340 / 1.12.2) that was **entirely vibecoded by AI**. No human wrote any of this. It connects, generates terrain, and occasionally works. The latest release runs on Java 8 or newer; building from source needs Java 11.
 
 ## Features
 
@@ -65,7 +64,6 @@ net.vibmc.player      — the people
 net.vibmc.plugin      — mod support
 net.vibmc.command     — slash commands
 net.vibmc.permission  — who can do what
-```
 ```
 
 ## Version Requirements
