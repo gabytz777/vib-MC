@@ -15,7 +15,7 @@
 
 </div>
 
-![vib-MC screenshot](image.png)
+![vib-MC screenshot](https://slopmadebymestudios.lol/files/vibmc-screenshot.png)
 
 ---
 
