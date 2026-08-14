@@ -6,8 +6,9 @@ import java.io.ByteArrayOutputStream;
 
 public class Chunk {
     private static final int WORLD_HEIGHT = 256;
-    private static final int SEA_LEVEL = 62;
-    private static final int BITS_PER_BLOCK = 13;
+    private static final int SEA_LEVEL = 13;      // water fills up to 4 deep (surface 9 -> y10..13)
+    private static final int BASE_SURFACE = 9;    // grass top: 1 bedrock + 7 stone-mix + 2 grass
+    private static final int BITS_PER_BLOCK = 13; // canonical 1.12.2 global palette (vanilla uses 13 bits); prismarine clamps to 12 for its own storage
     private static final int SECTION_LONGS = 4096 * BITS_PER_BLOCK / 64;
 
     private final World world;
@@ -23,69 +24,53 @@ public class Chunk {
 
     public static Chunk generate(World world, int chunkX, int chunkZ) {
         Chunk chunk = new Chunk(world, chunkX, chunkZ);
-        TerrainGenerator generator = new TerrainGenerator(world.seed());
+        TerrainGenerator terrain = new TerrainGenerator(world.seed());
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int worldX = chunkX * 16 + x;
                 int worldZ = chunkZ * 16 + z;
-                int height = generator.getHeight(worldX, worldZ);
-                boolean underwater = height <= SEA_LEVEL;
+
+                // surface 9..15 from noise: grass top at y=surface
+                double n = terrain.fbm(worldX * 0.05, worldZ * 0.05, 2);
+                int surface = BASE_SURFACE + clamp((int) ((n + 1.0) * 5.0), 0, 6);
 
                 chunk.setBlock(x, 0, z, Block.BEDROCK.id());
-                for (int y = 1; y < height - 3; y++) {
-                    chunk.setBlock(x, y, z, Block.STONE.id());
+                for (int y = 1; y <= surface - 2; y++) {
+                    chunk.setBlock(x, y, z, stoneMix(terrain, worldX, y, worldZ));
                 }
-                if (underwater) {
-                    for (int y = Math.max(1, height - 3); y < height; y++) {
-                        chunk.setBlock(x, y, z, Block.GRAVEL.id());
-                    }
-                } else {
-                    boolean beach = height <= SEA_LEVEL + 2;
-                    short fill = beach ? Block.SAND.id() : Block.DIRT.id();
-                    for (int y = Math.max(1, height - 3); y < height - 1; y++) {
-                        chunk.setBlock(x, y, z, fill);
-                    }
-                    chunk.setBlock(x, height - 1, z, beach ? Block.SAND.id() : Block.GRASS.id());
-                }
-                if (underwater) {
-                    for (int y = height; y <= SEA_LEVEL; y++) {
+                // grass: 2 layers
+                chunk.setBlock(x, surface - 1, z, Block.GRASS.id());
+                chunk.setBlock(x, surface, z, Block.GRASS.id());
+                // water: up to 4 deep
+                if (surface < SEA_LEVEL) {
+                    for (int y = surface + 1; y <= SEA_LEVEL; y++) {
                         chunk.setBlock(x, y, z, Block.WATER.id());
                     }
-                }
-                if (!underwater && height > SEA_LEVEL + 2 && generator.hash(worldX, worldZ) % 48 == 0) {
-                    placeTree(chunk, x, height, z);
                 }
             }
         }
         return chunk;
     }
 
-    private static void placeTree(Chunk chunk, int x, int baseY, int z) {
-        if (x < 2 || x > 13 || z < 2 || z > 13) {
-            return;
+    private static short stoneMix(TerrainGenerator terrain, int x, int y, int z) {
+        int h = terrain.hash(x, z ^ (y * 7919));
+        switch (h % 10) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+                return Block.STONE.id();
+            case 4:
+            case 5:
+            case 6:
+                return Block.ANDESITE.id();
+            default:
+                return Block.DIORITE.id();
         }
-        int trunkHeight = 4 + ((x + z + baseY) & 1);
-        if (baseY + trunkHeight + 2 >= WORLD_HEIGHT) {
-            return;
-        }
-        for (int i = 1; i <= trunkHeight; i++) {
-            chunk.setBlock(x, baseY + i, z, Block.WOOD.id());
-        }
-        int topY = baseY + trunkHeight;
-        for (int dy = 0; dy <= 2; dy++) {
-            int radius = dy == 2 ? 1 : 2;
-            int y = topY - dy;
-            for (int dx = -radius; dx <= radius; dx++) {
-                for (int dz = -radius; dz <= radius; dz++) {
-                    if (Math.abs(dx) == radius && Math.abs(dz) == radius) {
-                        continue;
-                    }
-                    chunk.setBlock(x + dx, y, z + dz, Block.LEAVES.id());
-                }
-            }
-        }
-        chunk.setBlock(x, topY + 1, z, Block.LEAVES.id());
-        chunk.setBlock(x, topY + 2, z, Block.LEAVES.id());
+    }
+
+    private static int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     public void setBlock(int x, int y, int z, short id) {
@@ -122,7 +107,7 @@ public class Chunk {
                 for (int z = 0; z < 16; z++) {
                     for (int x = 0; x < 16; x++) {
                         short internalId = blocks[index(x, baseY + y, z)];
-                        int state = Block.protocolIdOf(internalId) << 4;
+                        int state = Block.stateIdOf(internalId);
                         int i = (y << 8) | (z << 4) | x;
                         int bitIndex = i * BITS_PER_BLOCK;
                         int startLong = bitIndex >> 6;
@@ -135,7 +120,7 @@ public class Chunk {
                     }
                 }
             }
-            // 1.12.2 section header: bits per block, palette length, data array length
+            // 1.12.2 section header: bits per block, palette length (0 = global palette), data array length
             out.write(BITS_PER_BLOCK);
             writeVarInt(out, 0);
             writeVarInt(out, SECTION_LONGS);

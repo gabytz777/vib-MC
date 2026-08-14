@@ -8,7 +8,7 @@ public class HandshakeHandler implements PacketHandler {
     @Override
     public void handle(ClientConnection connection, int packetId, PacketBuffer buffer) {
         if (packetId == 0x00) {
-            buffer.readVarInt(); // protocol version
+            int protocol = buffer.readVarInt(); // protocol version
             buffer.readString(); // server address
             buffer.readUnsignedShort(); // server port
             int nextState = buffer.readVarInt();
@@ -16,6 +16,10 @@ public class HandshakeHandler implements PacketHandler {
                 connection.setProtocolState(ProtocolState.STATUS);
                 connection.setHandler(new StatusHandler());
             } else if (nextState == 2) {
+                if (protocol != 340) {
+                    connection.disconnect("Incompatible client! vib-MC supports Minecraft 1.12.2 (protocol 340). Your client sent protocol " + protocol + ".");
+                    return;
+                }
                 connection.setProtocolState(ProtocolState.LOGIN);
                 connection.setHandler(new LoginHandler());
             }

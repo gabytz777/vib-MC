@@ -21,6 +21,7 @@ public class ClientConnection {
     private String username;
 
     private final Queue<byte[]> outgoing = new ConcurrentLinkedQueue<>();
+    private ByteBuffer currentOut;
 
     private byte[] inBuffer = new byte[8192];
     private int inLen;
@@ -161,11 +162,32 @@ public class ClientConnection {
     }
 
     public boolean hasQueuedPackets() {
-        return !outgoing.isEmpty();
+        return currentOut != null || !outgoing.isEmpty();
     }
 
     public byte[] dequeuePacket() {
         return outgoing.poll();
+    }
+
+    /**
+     * Writes queued packets to the socket, honouring partial non-blocking writes.
+     * Returns false if the socket buffer is full and the current packet is unfinished.
+     */
+    public boolean flushWrites() throws IOException {
+        while (true) {
+            if (currentOut == null) {
+                byte[] next = outgoing.poll();
+                if (next == null) {
+                    return true;
+                }
+                currentOut = ByteBuffer.wrap(next);
+            }
+            channel.write(currentOut);
+            if (currentOut.hasRemaining()) {
+                return false;
+            }
+            currentOut = null;
+        }
     }
 
     public void disconnect(String reason) {

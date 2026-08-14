@@ -15,33 +15,49 @@ public class PlayHandler implements PacketHandler {
     @Override
     public void handle(ClientConnection connection, int packetId, PacketBuffer buffer) {
         switch (packetId) {
-            case 0x00: // Keep Alive
-                buffer.readLong();
+            case 0x00: // Teleport Confirm
+                buffer.readVarInt();
                 break;
-            case 0x01: { // Chat Message
+            case 0x02: { // Chat Message
                 String message = buffer.readString();
                 VibMC.getInstance().getPlayerManager().handleChat(player, message);
                 break;
             }
-            case 0x03: // Player (on ground)
+            case 0x03: { // Client Status
+                int action = buffer.readVarInt();
+                if (action == 0) {
+                    player.respawn();
+                }
+                break;
+            }
+            case 0x04: { // Client Settings
+                buffer.readString(); // locale
+                buffer.readByte(); // view distance
+                buffer.readVarInt(); // chat mode
+                buffer.readBoolean(); // chat colors
+                buffer.readUnsignedByte(); // displayed skin parts
+                buffer.readVarInt(); // main hand
+                break;
+            }
+            case 0x09: // Plugin Message
+                buffer.readString(); // channel
+                break;
+            case 0x0B: // Keep Alive
+                buffer.readLong();
+                break;
+            case 0x0C: // Player (on ground)
                 player.setOnGround(buffer.readBoolean());
                 break;
-            case 0x04: { // Player Position
+            case 0x0D: { // Player Position
                 double x = buffer.readDouble();
                 double y = buffer.readDouble();
                 double z = buffer.readDouble();
-                player.setOnGround(buffer.readBoolean());
+                boolean onGround = buffer.readBoolean();
                 player.setPosition(x, y, z);
+                player.setOnGround(onGround);
                 break;
             }
-            case 0x05: { // Player Look
-                float yaw = buffer.readFloat();
-                float pitch = buffer.readFloat();
-                player.setOnGround(buffer.readBoolean());
-                player.setRotation(yaw, pitch);
-                break;
-            }
-            case 0x06: { // Player Position And Look
+            case 0x0E: { // Player Position And Look
                 double x = buffer.readDouble();
                 double y = buffer.readDouble();
                 double z = buffer.readDouble();
@@ -52,27 +68,16 @@ public class PlayHandler implements PacketHandler {
                 player.setOnGround(onGround);
                 break;
             }
-            case 0x09: // Held Item Change
+            case 0x0F: { // Player Look
+                float yaw = buffer.readFloat();
+                float pitch = buffer.readFloat();
+                boolean onGround = buffer.readBoolean();
+                player.setRotation(yaw, pitch);
+                player.setOnGround(onGround);
+                break;
+            }
+            case 0x1A: // Held Item Change
                 player.setHeldItemSlot(buffer.readShort());
-                break;
-            case 0x12: { // Client Settings
-                buffer.readString(); // locale
-                buffer.readByte(); // view distance
-                buffer.readVarInt(); // chat mode
-                buffer.readBoolean(); // chat colors
-                buffer.readUnsignedByte(); // displayed skin parts
-                buffer.readVarInt(); // main hand
-                break;
-            }
-            case 0x13: { // Client Status
-                int action = buffer.readVarInt();
-                if (action == 0) {
-                    player.respawn();
-                }
-                break;
-            }
-            case 0x18: // Teleport Confirm
-                buffer.readVarInt();
                 break;
             default:
                 break;

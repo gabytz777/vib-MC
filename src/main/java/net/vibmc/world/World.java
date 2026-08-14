@@ -56,15 +56,55 @@ public class World {
     }
 
     public int getHighestBlockY(int x, int z) {
-        Chunk chunk = chunkManager.getChunk(x >> 4, z >> 4);
-        int localX = x & 15;
-        int localZ = z & 15;
+        Chunk chunk = chunkManager.getChunk(Math.floorDiv(x, 16), Math.floorDiv(z, 16));
+        int localX = Math.floorMod(x, 16);
+        int localZ = Math.floorMod(z, 16);
         for (int y = 255; y >= 0; y--) {
             if (chunk.getBlock(localX, y, localZ) != Block.AIR.id()) {
                 return y;
             }
         }
         return 0;
+    }
+
+    public int getHighestSolidY(int x, int z) {
+        Chunk chunk = chunkManager.getChunk(Math.floorDiv(x, 16), Math.floorDiv(z, 16));
+        int localX = Math.floorMod(x, 16);
+        int localZ = Math.floorMod(z, 16);
+        for (int y = 255; y >= 0; y--) {
+            short id = chunk.getBlock(localX, y, localZ);
+            if (id != Block.AIR.id() && id != Block.WATER.id() && id != Block.LAVA.id()) {
+                return y;
+            }
+        }
+        return 0;
+    }
+
+    /** Finds the nearest dry-land spawn column within radius, starting from (x, z). */
+    public int[] findDrySpawn(int x, int z, int radius) {
+        int best = -1;
+        int bestDist = Integer.MAX_VALUE;
+        for (int dz = -radius; dz <= radius; dz++) {
+            for (int dx = -radius; dx <= radius; dx++) {
+                int wx = x + dx;
+                int wz = z + dz;
+                if (getHighestSolidY(wx, wz) >= getSeaLevel() && getHighestBlockY(wx, wz) < 256) {
+                    int dist = dx * dx + dz * dz;
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        best = (wx << 16) | (wz & 0xFFFF);
+                    }
+                }
+            }
+        }
+        if (best < 0) return new int[]{x, z};
+        int sx = best >> 16;
+        int sz = (short) (best & 0xFFFF);
+        return new int[]{sx, sz};
+    }
+
+    public int getSeaLevel() {
+        return 13;
     }
 
     public long seed() {

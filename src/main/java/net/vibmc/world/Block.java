@@ -16,7 +16,9 @@ public enum Block {
     TRAPDOOR((short) 12, 1.0f, 2.5f),
     SAND((short) 13, 0.5f, 2.5f),
     GRAVEL((short) 14, 0.6f, 3.0f),
-    BEDROCK((short) 15, -1.0f, 3600000.0f);
+    BEDROCK((short) 15, -1.0f, 3600000.0f),
+    ANDESITE((short) 16, 1.5f, 6.0f),
+    DIORITE((short) 17, 1.5f, 6.0f);
 
     private final short id;
     private final float hardness;
@@ -40,6 +42,17 @@ public enum Block {
         return blastResistance;
     }
 
+    public short metadata() {
+        switch (this) {
+            case ANDESITE:
+                return 5; // stone:5
+            case DIORITE:
+                return 3; // stone:3
+            default:
+                return 0;
+        }
+    }
+
     /**
      * Maps an internal block id to the vanilla block id used by the protocol.
      * Block states are encoded as (vanilla id << 4 | metadata).
@@ -48,6 +61,18 @@ public enum Block {
         for (Block block : values()) {
             if (block.id == internalId) {
                 return block.protocolId();
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Full protocol state id: (vanilla block id << 4) | metadata.
+     */
+    public static short stateIdOf(short internalId) {
+        for (Block block : values()) {
+            if (block.id == internalId) {
+                return (short) ((block.protocolId() << 4) | block.metadata());
             }
         }
         return 0;
@@ -85,6 +110,9 @@ public enum Block {
                 return 64;
             case TRAPDOOR:
                 return 96;
+            case ANDESITE:
+            case DIORITE:
+                return 1; // stone block, differentiated by metadata
             default:
                 return 0;
         }

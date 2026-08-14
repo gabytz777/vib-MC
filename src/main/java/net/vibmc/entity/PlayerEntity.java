@@ -41,9 +41,11 @@ public class PlayerEntity extends Entity {
     }
 
     public void spawnAtSpawn() {
-        this.x = 8.5;
-        this.z = 8.5;
-        this.y = getWorld().getHighestBlockY((int) x, (int) z) + 1;
+        int[] spawn = getWorld().findDrySpawn(8, 8, 16);
+        this.x = spawn[0] + 0.5;
+        this.z = spawn[1] + 0.5;
+        this.y = getWorld().getHighestSolidY(spawn[0], spawn[1]) + 1;
+        this.onGround = true;
     }
 
     public void respawn() {
@@ -58,7 +60,7 @@ public class PlayerEntity extends Entity {
     public void tick() {
         if (!alive) return;
         if (gameMode != GameMode.CREATIVE && gameMode != GameMode.SPECTATOR && !onGround && !flying) {
-            double below = getWorld().getHighestBlockY((int) x, (int) z) + 1;
+            double below = getWorld().getHighestBlockY((int) Math.floor(x), (int) Math.floor(z)) + 1;
             if (y > below) {
                 y -= 0.1;
             } else {

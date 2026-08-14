@@ -108,14 +108,7 @@ public class NetworkServer {
         ClientConnection connection = connections.get(channel);
         if (connection == null) return;
 
-        while (connection.hasQueuedPackets()) {
-            byte[] packet = connection.dequeuePacket();
-            VibMC.getInstance().getLogger().debug("Writing %d bytes to %s", packet.length, connection.getUsername() != null ? connection.getUsername() : "client");
-            ByteBuffer buffer = ByteBuffer.wrap(packet);
-            channel.write(buffer);
-        }
-
-        if (!connection.hasQueuedPackets()) {
+        if (connection.flushWrites()) {
             key.interestOps(SelectionKey.OP_READ);
         }
     }

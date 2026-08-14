@@ -14,7 +14,6 @@ import net.vibmc.network.Packet;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.zip.Deflater;
 
 public class PlayerManager {
     private final Map<UUID, PlayerEntity> players;
@@ -37,7 +36,7 @@ public class PlayerManager {
 
         server.getLogger().info("%s joined the game", player.getUsername());
 
-        server.getLogger().info("Player spawn at %.1f, %.1f, %.1f (chunk %d, %d)", player.getX(), player.getY(), player.getZ(), (int)player.getX() >> 4, (int)player.getZ() >> 4);
+        server.getLogger().info("Player spawn at %.1f, %.1f, %.1f (chunk %d, %d)", player.getX(), player.getY(), player.getZ(), (int) Math.floor(player.getX()) >> 4, (int) Math.floor(player.getZ()) >> 4);
         sendJoinPackets(player);
         broadcastMessage("{\"text\":\"§e" + player.getUsername() + " joined the game\"}");
     }
@@ -114,8 +113,8 @@ public class PlayerManager {
     }
 
     private void updateChunkStream(PlayerEntity player) {
-        int cx = (int) player.getX() >> 4;
-        int cz = (int) player.getZ() >> 4;
+        int cx = (int) Math.floor(player.getX()) >> 4;
+        int cz = (int) Math.floor(player.getZ()) >> 4;
         if (cx == player.getLoadedChunkX() && cz == player.getLoadedChunkZ()) {
             return;
         }
@@ -166,10 +165,11 @@ public class PlayerManager {
         sendWorldInfo(conn, player);
         sendSpawnPosition(conn, player);
         sendUpdateHealth(conn, player);
+        sendPlayerPosition(conn, player);
 
-        // Send spawn chunks BEFORE positioning the player
-        int centerX = (int) player.getX() >> 4;
-        int centerZ = (int) player.getZ() >> 4;
+        // Send spawn chunks AFTER positioning so the client requests around the right center
+        int centerX = (int) Math.floor(player.getX()) >> 4;
+        int centerZ = (int) Math.floor(player.getZ()) >> 4;
         int viewDist = VibMC.getInstance().getConfig().getViewDistance();
         for (int dx = -viewDist; dx <= viewDist; dx++) {
             for (int dz = -viewDist; dz <= viewDist; dz++) {
@@ -179,7 +179,6 @@ public class PlayerManager {
         }
         player.setLoadedChunk(centerX, centerZ);
 
-        sendPlayerPosition(conn, player);
         sendGameState(conn);
     }
 
@@ -296,21 +295,9 @@ public class PlayerManager {
         Chunk chunk = VibMC.getInstance().getWorldManager().getMainWorld().getChunk(chunkX, chunkZ);
         if (chunk == null) return;
 
+        // 1.12.2 sends the chunk data raw (no zlib layer); only network-level compression applies
         byte[] chunkData = chunk.toNetworkData();
-        byte[] compressed = compress(chunkData);
-        // Verify compression
-        try {
-            java.util.zip.Inflater inflater = new java.util.zip.Inflater();
-            inflater.setInput(compressed);
-            byte[] checkBuf = new byte[chunkData.length + 1024];
-            int checkLen = inflater.inflate(checkBuf);
-            inflater.end();
-            if (checkLen != chunkData.length) {
-                VibMC.getInstance().getLogger().warn("Chunk %d,%d compression mismatch: sent=%d, got=%d", chunkX, chunkZ, chunkData.length, checkLen);
-            }
-        } catch (Exception e) {
-            VibMC.getInstance().getLogger().severe("Chunk %d,%d compression ERROR: %s", chunkX, chunkZ, e);
-        }
+        VibMC.getInstance().getLogger().info("Sending chunk %d,%d: raw=%d bytes", chunkX, chunkZ, chunkData.length);
         conn.sendPacket(new Packet() {
             public int getPacketId() { return 0x20; }
             public void read(PacketBuffer b) {}
@@ -319,9 +306,9 @@ public class PlayerManager {
                 b.writeInt(chunkZ);
                 b.writeBoolean(true);
                 b.writeVarInt(65535);
-                b.writeVarInt(compressed.length);
-                b.writeBytes(compressed);
-                b.writeVarInt(0);
+                b.writeVarInt(chunkData.length);
+                b.writeBytes(chunkData);
+                b.writeVarInt(0); // block entities (none)
             }
         });
     }
@@ -337,17 +324,4 @@ public class PlayerManager {
         });
     }
 
-    private byte[] compress(byte[] data) {
-        Deflater deflater = new Deflater(Deflater.DEFAULT_COMPRESSION);
-        deflater.setInput(data);
-        deflater.finish();
-        byte[] buf = new byte[8192];
-        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream(data.length);
-        while (!deflater.finished()) {
-            int len = deflater.deflate(buf);
-            baos.write(buf, 0, len);
-        }
-        deflater.end();
-        return baos.toByteArray();
-    }
 }

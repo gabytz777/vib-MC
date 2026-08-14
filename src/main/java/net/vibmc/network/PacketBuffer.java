@@ -159,9 +159,10 @@ public class PacketBuffer {
     }
 
     public void writePosition(int x, int y, int z) {
+        // 1.12.2 format: X = high 26 bits, Y = middle 12 bits, Z = low 26 bits
         long value = (((long) x & 0x3FFFFFFL) << 38)
-                | (((long) z & 0x3FFFFFFL) << 12)
-                | ((long) y & 0xFFFL);
+                | (((long) y & 0xFFFL) << 26)
+                | ((long) z & 0x3FFFFFFL);
         writeLong(value);
     }
 
