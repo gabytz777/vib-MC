@@ -32,7 +32,7 @@
 
 ## v0.0.4-hotfix.1 — hotfix for ALL versions
 
-- **Slash commands actually execute** — chat messages starting with `/` are now routed to the command system instead of being broadcast as chat, so `/gamemode`, `/tp`, `/time`, `/weather`, `/give` and plugin commands (e.g. `/gmc`) work in-game for the first time. This fix applies to every release: v0.0.1 through v0.0.4.
+- **Slash commands actually execute** — chat messages starting with `/` are now routed to the command system instead of being broadcast as chat, so `/gamemode`, `/tp`, `/time`, `/weather`, `/give` and plugin commands work in-game for the first time. This fix applies to every release: v0.0.1 through v0.0.4.
 
 ## Features
 
