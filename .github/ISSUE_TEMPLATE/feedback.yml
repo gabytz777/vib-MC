@@ -1,8 +1,6 @@
 name: Feedback
 description: A request or idea for vib-MC
-title: ''
 labels: enhancement
-assignees: ''
 
 body:
   - type: textarea

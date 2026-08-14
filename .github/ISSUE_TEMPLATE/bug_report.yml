@@ -1,8 +1,6 @@
 name: Bug report
 description: Something is broken in vib-MC
-title: ''
 labels: bug
-assignees: ''
 
 body:
   - type: textarea
