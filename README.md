@@ -21,6 +21,15 @@
 
 `vib-MC` is a Minecraft server (protocol 340 / 1.12.2) that was **entirely vibecoded by AI**. No human wrote any of this. It connects, generates terrain, and occasionally works. The latest release runs on Java 8 or newer, and so does building from source.
 
+## What's new in v0.0.4 (changes since v0.0.3)
+
+- **Terrain renders on the vanilla 1.12.2 client** — chunk data now uses the canonical 13-bit block encoding (the previous 12-bit format was being misinterpreted as garbage by the notchian client)
+- **New terrain profile** — grass (2 layers) on top, stone mixed with andesite and diorite (7 layers), water up to 4 deep, bedrock at the bottom
+- **Spawn on dry land** — the game finds the nearest dry column instead of dropping you in the sea
+- **Chunk streaming fixes** — partial non-blocking writes are flushed properly so terrain streams in as you move
+- **Protocol fixes** — client status (respawn), client settings, teleport confirm, plugin messages, keep-alive, and position packets handled at the correct 1.12.2 IDs
+- **Andesite/diorite wired up** — stone metadata states (stone:3 diorite, stone:5 andesite) now map correctly on the wire
+
 ## Features
 
 | Status | Feature |
@@ -73,7 +82,8 @@ net.vibmc.permission  — who can do what
 |:------:|---------|----------|
 | ✅ | v0.0.1 — alpha | Java 21 or newer |
 | ✅ | v0.0.2 — stable | Java 11 or newer |
-| ✅ | v0.0.3 — latest, stable | Java 8 or newer |
+| ✅ | v0.0.3 — stable | Java 8 or newer |
+| ✅ | v0.0.4 — latest, stable | Java 8 or newer |
 
 Building from source requires **Java 8 or newer** (`options.release = 8`).
 
