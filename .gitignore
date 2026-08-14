@@ -14,5 +14,8 @@ out/
 /plugins/
 /plugins-dev/
 
+# Dev tools (node scripts used for wire debugging)
+/tools/
+
 # Local screenshots (not committed)
 /image.png
