@@ -10,5 +10,5 @@ out/
 *.class
 
 # Runtime data
-world/
-plugins/
+/world/
+/plugins/
