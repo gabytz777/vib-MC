@@ -7,11 +7,11 @@
 [![Vibecoded](https://img.shields.io/badge/Vibecoded-ff69b4?style=for-the-badge)]()
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.12.2-blue?style=for-the-badge&logo=minecraft)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)]()
-[![Release](https://img.shields.io/badge/Release-v0.0.4-blue?style=for-the-badge)](https://github.com/gabytz777/vib-MC/releases/tag/v0.0.4)
+[![Release](https://img.shields.io/badge/Release-v0.0.4--hotfix.1-blue?style=for-the-badge)](https://github.com/gabytz777/vib-MC/releases/tag/v0.0.4-hotfix.1)
 
 **vibed into existence** — a Minecraft server made entirely by AI, one prompt at a time.
 
-> ⚠️ **Latest release: v0.0.4** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
+> ⚠️ **Latest release: v0.0.4-hotfix.1** — This whole thing is being coded by an AI. It connects sometimes. YMMV.
 
 </div>
 
@@ -30,6 +30,10 @@
 - **Protocol fixes** — client status (respawn), client settings, teleport confirm, plugin messages, keep-alive, and position packets handled at the correct 1.12.2 IDs
 - **Andesite/diorite wired up** — stone metadata states (stone:3 diorite, stone:5 andesite) now map correctly on the wire
 
+## v0.0.4-hotfix.1 — hotfix for ALL versions
+
+- **Slash commands actually execute** — chat messages starting with `/` are now routed to the command system instead of being broadcast as chat, so `/gamemode`, `/tp`, `/time`, `/weather`, `/give` and plugin commands (e.g. `/gmc`) work in-game for the first time. This fix applies to every release: v0.0.1 through v0.0.4.
+
 ## Features
 
 | Status | Feature |
@@ -46,7 +50,7 @@
 
 ## Requirements
 
-- **Java 8 or newer** to run v0.0.4
+- **Java 8 or newer** to run v0.0.4-hotfix.1 (and every release from v0.0.3 up)
 - **Java 8 or newer** to build from source
 
 ## Quick Start
@@ -83,7 +87,8 @@ net.vibmc.permission  — who can do what
 | ✅ | v0.0.1 — alpha | Java 21 or newer |
 | ✅ | v0.0.2 — stable | Java 11 or newer |
 | ✅ | v0.0.3 — stable | Java 8 or newer |
-| ✅ | v0.0.4 — latest, stable | Java 8 or newer |
+| ✅ | v0.0.4 — stable | Java 8 or newer |
+| ✅ | v0.0.4-hotfix.1 — latest, stable (hotfix applies to all versions) | Java 8 or newer |
 
 Building from source requires **Java 8 or newer** (`options.release = 8`).
 
