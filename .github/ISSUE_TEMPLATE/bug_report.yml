@@ -1,42 +1,47 @@
 name: Bug report
-description: Report a bug in vib-MC
-title: "[Bug] "
-labels: [bug]
+about: Something is broken in vib-MC
+title: ''
+labels: bug
+assignees: ''
+
 body:
-  - type: input
-    id: short
+  - type: textarea
+    id: describe
     attributes:
-      label: The issue in one short sentence
-      placeholder: "e.g. server crashes when I run /give"
+      label: Describe the bug
+      description: A clear description of what's broken.
+      placeholder: what you saw, what you expected
     validations:
       required: true
   - type: textarea
-    id: what
-    attributes:
-      label: What's the issue?
-      placeholder: What you saw, what you expected.
-    validations:
-      required: true
-  - type: textarea
-    id: steps
+    id: reproduce
     attributes:
       label: How did it occur?
-      description: Steps so we can replicate it.
-      placeholder: "1. started the server\n2. ran /give\n3. crash"
+      description: Steps to reproduce the issue.
+      placeholder: steps so we can replicate it
     validations:
       required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+    validations:
+      required: false
   - type: input
     id: version
     attributes:
       label: Release version
-      placeholder: e.g. v0.0.2
+      description: Which vib-MC release are you on?
+      placeholder: v0.0.4-hotfix.1
     validations:
       required: true
   - type: textarea
     id: log
     attributes:
-      label: Server log output
-      description: Paste the raw log output from the server console (not a file name or link).
-      placeholder: |
-        [12:34:56] [Server thread/INFO]: Starting minecraft server...
-        [12:34:56] [Server thread/ERROR]: Crash! it broke
+      label: Server log
+      description: Paste the relevant log output here.
+      placeholder: paste the raw log output from the server console
+      render: shell
+    validations:
+      required: false

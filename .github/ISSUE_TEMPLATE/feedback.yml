@@ -1,0 +1,31 @@
+name: Feedback
+about: A request or idea for vib-MC
+title: ''
+labels: enhancement
+assignees: ''
+
+body:
+  - type: textarea
+    id: want
+    attributes:
+      label: What would you like?
+      description: Describe the feature or change you want.
+      placeholder: describe the feature or change you want
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why?
+      description: What would it improve or fix for you?
+      placeholder: what would it improve or fix for you
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?
+      description: Additional context, examples, or screenshots.
+      placeholder: context, examples, screenshots
+    validations:
+      required: false
