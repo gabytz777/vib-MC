@@ -1,6 +1,10 @@
 package net.vibmc.world;
 
 import net.vibmc.entity.Entity;
+import net.vibmc.world.gen.ChunkGenerator;
+import net.vibmc.world.gen.EndGenerator;
+import net.vibmc.world.gen.NetherGenerator;
+import net.vibmc.world.gen.OverworldGenerator;
 import net.vibmc.world.storage.WorldStorage;
 
 import java.util.ArrayList;
@@ -11,6 +15,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class World {
     private final long seed;
     private final String name;
+    private final Dimension dimension;
+    private final ChunkGenerator generator;
     private final ChunkManager chunkManager;
     private final TimeSystem timeSystem;
     private final WeatherSystem weatherSystem;
@@ -19,16 +25,41 @@ public class World {
     private long worldTime;
 
     public World(long seed, String name) {
-        this(seed, name, new WorldStorage(name));
+        this(seed, name, Dimension.OVERWORLD, new WorldStorage(name));
     }
 
     public World(long seed, String name, WorldStorage storage) {
+        this(seed, name, Dimension.OVERWORLD, storage);
+    }
+
+    public World(long seed, String name, Dimension dimension, WorldStorage storage) {
         this.seed = seed;
         this.name = name;
+        this.dimension = dimension;
         this.storage = storage;
+        this.generator = generatorFor(dimension);
         this.timeSystem = new TimeSystem();
         this.weatherSystem = new WeatherSystem();
         this.chunkManager = new ChunkManager(this, storage);
+    }
+
+    private static ChunkGenerator generatorFor(Dimension dimension) {
+        switch (dimension) {
+            case NETHER:
+                return new NetherGenerator();
+            case END:
+                return new EndGenerator();
+            default:
+                return new OverworldGenerator();
+        }
+    }
+
+    public Dimension dimension() {
+        return dimension;
+    }
+
+    public ChunkGenerator generator() {
+        return generator;
     }
 
     public Chunk chunk(int chunkX, int chunkZ) {
@@ -37,6 +68,24 @@ public class World {
 
     public Chunk getChunk(int chunkX, int chunkZ) {
         return chunk(chunkX, chunkZ);
+    }
+
+    /** Reads a block by absolute world coordinates, loading the chunk if needed. */
+    public short getBlock(int x, int y, int z) {
+        if (y < 0 || y >= Chunk.WORLD_HEIGHT) {
+            return Block.AIR.id();
+        }
+        return chunk(Math.floorDiv(x, 16), Math.floorDiv(z, 16))
+                .getBlock(Math.floorMod(x, 16), y, Math.floorMod(z, 16));
+    }
+
+    /** Writes a block by absolute world coordinates, loading the chunk if needed. */
+    public void setBlock(int x, int y, int z, short id) {
+        if (y < 0 || y >= Chunk.WORLD_HEIGHT) {
+            return;
+        }
+        chunk(Math.floorDiv(x, 16), Math.floorDiv(z, 16))
+                .setBlock(Math.floorMod(x, 16), y, Math.floorMod(z, 16), id);
     }
 
     public void tick(long tick) {
@@ -111,7 +160,7 @@ public class World {
     }
 
     public int getSeaLevel() {
-        return 13;
+        return dimension.seaLevel();
     }
 
     public long seed() {

@@ -107,10 +107,10 @@ public final class VillageGenerator {
     private static void placeHouse(Chunk chunk, TerrainGenerator terrain, int centerX, int centerZ) {
         int y = terrain.surfaceHeight(centerX, centerZ);
 
-        // foundation
+        // cobblestone foundation
         for (int dx = -HOUSE_HALF; dx <= HOUSE_HALF; dx++) {
             for (int dz = -HOUSE_HALF; dz <= HOUSE_HALF; dz++) {
-                setWorldBlock(chunk, centerX + dx, y, centerZ + dz, Block.STONE.id());
+                setWorldBlock(chunk, centerX + dx, y, centerZ + dz, Block.COBBLESTONE.id());
             }
         }
 
@@ -126,15 +126,24 @@ public final class VillageGenerator {
                         setWorldBlock(chunk, centerX + dx, wy, centerZ + dz, Block.DOOR.id());
                         continue;
                     }
-                    setWorldBlock(chunk, centerX + dx, wy, centerZ + dz, Block.WOOD.id());
+                    if (dx == 0 && dz == HOUSE_HALF && wy == y + 2) {
+                        setWorldBlock(chunk, centerX + dx, wy, centerZ + dz, Block.DOOR_TOP.id());
+                        continue;
+                    }
+                    // Log posts on the corners, plank infill between them - the same
+                    // read as a vanilla village house rather than a solid log box.
+                    boolean corner = (dx == -HOUSE_HALF || dx == HOUSE_HALF)
+                            && (dz == -HOUSE_HALF || dz == HOUSE_HALF);
+                    setWorldBlock(chunk, centerX + dx, wy, centerZ + dz,
+                            corner ? Block.WOOD.id() : Block.PLANKS.id());
                 }
             }
         }
 
-        // flat roof
+        // flat plank roof
         for (int dx = -HOUSE_HALF; dx <= HOUSE_HALF; dx++) {
             for (int dz = -HOUSE_HALF; dz <= HOUSE_HALF; dz++) {
-                setWorldBlock(chunk, centerX + dx, y + 4, centerZ + dz, Block.WOOD.id());
+                setWorldBlock(chunk, centerX + dx, y + 4, centerZ + dz, Block.PLANKS.id());
             }
         }
 

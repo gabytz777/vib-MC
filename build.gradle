@@ -7,8 +7,11 @@ java {
     withSourcesJar()
 }
 
-compileJava {
+tasks.withType(JavaCompile).configureEach {
     options.release = 8
+    // Targeting 8 is deliberate (the release still runs on Java 8); silence javac's
+    // "source/target value 8 is obsolete" notice so real warnings stay visible.
+    options.compilerArgs << '-Xlint:-options'
 }
 
 application {
@@ -37,7 +40,7 @@ jar {
         attributes(
             'Main-Class': 'net.vibmc.server.VibMC',
             'Implementation-Title': 'vib-MC',
-            'Implementation-Version': '0.0.3'
+            'Implementation-Version': '0.0.6'
         )
     }
     archiveBaseName = 'vib-mc'

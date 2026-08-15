@@ -1,8 +1,12 @@
 package net.vibmc.network;
 
+import net.vibmc.auth.GameProfile;
 import net.vibmc.network.handler.PacketHandler;
 import net.vibmc.server.VibMC;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
@@ -19,6 +23,13 @@ public class ClientConnection {
     private PacketHandler handler;
     private ProtocolState protocolState = ProtocolState.HANDSHAKE;
     private String username;
+    private GameProfile profile;
+
+    // Online-mode login state. AES/CFB8 is a stream cipher, so one Cipher per direction is
+    // kept alive for the whole connection and fed incrementally as bytes arrive or leave.
+    private byte[] verifyToken;
+    private Cipher decryptCipher;
+    private Cipher encryptCipher;
 
     private final Queue<byte[]> outgoing = new ConcurrentLinkedQueue<>();
     private ByteBuffer currentOut;
@@ -64,10 +75,90 @@ public class ClientConnection {
         this.username = username;
     }
 
+    /** The peer's IP, or null if the socket is already gone. Used for proxy trust checks. */
+    public String remoteAddress() {
+        try {
+            java.net.SocketAddress remote = channel.getRemoteAddress();
+            if (remote instanceof java.net.InetSocketAddress) {
+                return ((java.net.InetSocketAddress) remote).getAddress().getHostAddress();
+            }
+        } catch (IOException e) {
+            // socket already closed
+        }
+        return null;
+    }
+
+    public GameProfile getProfile() {
+        return profile;
+    }
+
+    public void setProfile(GameProfile profile) {
+        this.profile = profile;
+        if (profile != null && profile.name() != null) {
+            this.username = profile.name();
+        }
+    }
+
+    public byte[] getVerifyToken() {
+        return verifyToken;
+    }
+
+    public void setVerifyToken(byte[] verifyToken) {
+        this.verifyToken = verifyToken;
+    }
+
+    public boolean isEncrypted() {
+        return encryptCipher != null;
+    }
+
+    /**
+     * Switches both directions to AES/CFB8 using the shared secret as both key and IV,
+     * exactly as the 1.12.2 protocol specifies.
+     *
+     * <p>Must be called after the Encryption Response has been read and before Login
+     * Success is written - Login Success is the first encrypted packet in each direction.
+     * Any bytes already buffered but not yet parsed belong to the encrypted stream, so
+     * they are decrypted here rather than being parsed as plaintext.
+     */
+    public void enableEncryption(SecretKey secret) {
+        try {
+            IvParameterSpec iv = new IvParameterSpec(secret.getEncoded());
+            Cipher in = Cipher.getInstance("AES/CFB8/NoPadding");
+            in.init(Cipher.DECRYPT_MODE, secret, iv);
+            Cipher out = Cipher.getInstance("AES/CFB8/NoPadding");
+            out.init(Cipher.ENCRYPT_MODE, secret, iv);
+
+            int pending = inLen - inOffset;
+            if (pending > 0) {
+                byte[] decrypted = in.update(inBuffer, inOffset, pending);
+                System.arraycopy(decrypted, 0, inBuffer, inOffset, decrypted.length);
+                inLen = inOffset + decrypted.length;
+            }
+
+            this.decryptCipher = in;
+            this.encryptCipher = out;
+        } catch (Exception e) {
+            VibMC.getInstance().getLogger().warn(
+                    "Could not enable encryption for %s: %s", describe(), e);
+            disconnect("Encryption failed");
+        }
+    }
+
+    private String describe() {
+        return username != null ? username : "an unauthenticated client";
+    }
+
     public void feed(byte[] data) {
-        ensureInCapacity(inLen + data.length);
-        System.arraycopy(data, 0, inBuffer, inLen, data.length);
-        inLen += data.length;
+        byte[] plain = data;
+        if (decryptCipher != null) {
+            plain = decryptCipher.update(data);
+            if (plain == null || plain.length == 0) {
+                return;
+            }
+        }
+        ensureInCapacity(inLen + plain.length);
+        System.arraycopy(plain, 0, inBuffer, inLen, plain.length);
+        inLen += plain.length;
         if (inLen > MAX_IN_BUFFER) {
             forceClose();
             return;
@@ -153,12 +244,43 @@ public class ClientConnection {
         PacketBuffer frame = new PacketBuffer();
         frame.writeVarInt(body.length);
         frame.writeBytes(body);
-        outgoing.add(frame.toByteArray());
+        outgoing.add(encryptOutbound(frame.toByteArray()));
         try {
             key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
         } catch (Exception e) {
             // key may already be invalidated
         }
+    }
+
+    /** Wraps plain text as a chat-component JSON string, escaping what would break it. */
+    static String jsonText(String text) {
+        StringBuilder out = new StringBuilder("{\"text\":\"");
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            switch (c) {
+                case '"': out.append("\\\""); break;
+                case '\\': out.append("\\\\"); break;
+                case '\n': out.append("\\n"); break;
+                case '\r': out.append("\\r"); break;
+                case '\t': out.append("\\t"); break;
+                default:
+                    if (c < 0x20) {
+                        out.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        out.append(c);
+                    }
+            }
+        }
+        return out.append("\"}").toString();
+    }
+
+    /** CFB8 is a stream cipher, so frames can be encrypted one at a time as they are queued. */
+    private byte[] encryptOutbound(byte[] frame) {
+        if (encryptCipher == null) {
+            return frame;
+        }
+        byte[] encrypted = encryptCipher.update(frame);
+        return encrypted == null ? new byte[0] : encrypted;
     }
 
     public boolean hasQueuedPackets() {
@@ -198,10 +320,10 @@ public class ClientConnection {
         PacketBuffer disconnect = new PacketBuffer();
         if (protocolState == ProtocolState.PLAY) {
             disconnect.writeVarInt(0x1A);
-            disconnect.writeString("{\"text\":\"" + reason + "\"}");
+            disconnect.writeString(jsonText(reason));
         } else if (protocolState == ProtocolState.LOGIN) {
             disconnect.writeVarInt(0x00);
-            disconnect.writeString("{\"text\":\"" + reason + "\"}");
+            disconnect.writeString(jsonText(reason));
         } else {
             forceClose();
             return;
@@ -211,7 +333,10 @@ public class ClientConnection {
         frame.writeVarInt(body.length);
         frame.writeBytes(body);
         try {
-            ByteBuffer buffer = ByteBuffer.wrap(frame.toByteArray());
+            // Flush anything already queued first, so the kick does not jump ahead of it
+            // and (once encrypted) desynchronise the cipher stream.
+            flushWrites();
+            ByteBuffer buffer = ByteBuffer.wrap(encryptOutbound(frame.toByteArray()));
             while (buffer.hasRemaining()) {
                 channel.write(buffer);
             }

@@ -53,6 +53,9 @@ public class PlayHandler implements PacketHandler {
                 double y = buffer.readDouble();
                 double z = buffer.readDouble();
                 boolean onGround = buffer.readBoolean();
+                if (!isFinitePosition(connection, x, y, z)) {
+                    return;
+                }
                 player.setPosition(x, y, z);
                 player.setOnGround(onGround);
                 break;
@@ -64,6 +67,9 @@ public class PlayHandler implements PacketHandler {
                 float yaw = buffer.readFloat();
                 float pitch = buffer.readFloat();
                 boolean onGround = buffer.readBoolean();
+                if (!isFinitePosition(connection, x, y, z) || !isFiniteLook(connection, yaw, pitch)) {
+                    return;
+                }
                 player.setPositionAndRotation(x, y, z, yaw, pitch);
                 player.setOnGround(onGround);
                 break;
@@ -72,6 +78,9 @@ public class PlayHandler implements PacketHandler {
                 float yaw = buffer.readFloat();
                 float pitch = buffer.readFloat();
                 boolean onGround = buffer.readBoolean();
+                if (!isFiniteLook(connection, yaw, pitch)) {
+                    return;
+                }
                 player.setRotation(yaw, pitch);
                 player.setOnGround(onGround);
                 break;
@@ -82,6 +91,34 @@ public class PlayHandler implements PacketHandler {
             default:
                 break;
         }
+    }
+
+    /**
+     * Rejects NaN and infinite coordinates outright.
+     *
+     * <p>A malformed position is not a cheat to be measured, it is data that would poison
+     * every later comparison - chunk maths, distance checks, the flight check - so the
+     * connection is dropped rather than letting the value into the world state.
+     */
+    static boolean isFinitePosition(ClientConnection connection, double x, double y, double z) {
+        if (isFinite(x) && isFinite(y) && isFinite(z)) {
+            return true;
+        }
+        connection.disconnect("Invalid move player packet received");
+        return false;
+    }
+
+    static boolean isFiniteLook(ClientConnection connection, float yaw, float pitch) {
+        if (isFinite(yaw) && isFinite(pitch)) {
+            return true;
+        }
+        connection.disconnect("Invalid move player packet received");
+        return false;
+    }
+
+    /** Java 8 has no Double.isFinite on the primitive path we want, so spell it out. */
+    private static boolean isFinite(double value) {
+        return !Double.isNaN(value) && !Double.isInfinite(value);
     }
 
     @Override

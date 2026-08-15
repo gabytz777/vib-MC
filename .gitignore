@@ -11,8 +11,13 @@ out/
 
 # Runtime data
 /world/
+/world_nether/
+/world_the_end/
 /plugins/
 /plugins-dev/
+
+# Dev handoff notes (never shipped)
+/CLAUDE.md
 
 # Dev tools (node scripts used for wire debugging)
 /tools/

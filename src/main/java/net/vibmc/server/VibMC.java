@@ -1,5 +1,7 @@
 package net.vibmc.server;
 
+import net.vibmc.auth.ServerKeyPair;
+import net.vibmc.auth.SessionAuthenticator;
 import net.vibmc.command.CommandManager;
 import net.vibmc.network.NetworkServer;
 import net.vibmc.player.PlayerManager;
@@ -20,8 +22,13 @@ public final class VibMC {
     private final PlayerManager playerManager;
     private final NetworkServer networkServer;
     private final CommandManager commandManager;
+    private final ServerKeyPair keyPair;
+    private final SessionAuthenticator sessionAuthenticator;
 
     private volatile boolean running;
+    /** Guards shutdown so it runs exactly once and to completion, whoever triggers it. */
+    private final Object stopLock = new Object();
+    private volatile boolean stopping;
     private long tickCounter;
 
     private VibMC() {
@@ -33,6 +40,17 @@ public final class VibMC {
         this.playerManager = new PlayerManager();
         this.networkServer = new NetworkServer();
         this.commandManager = new CommandManager();
+        this.keyPair = new ServerKeyPair();
+        this.sessionAuthenticator = new SessionAuthenticator();
+    }
+
+    /** RSA identity used for the online-mode login handshake. */
+    public ServerKeyPair getKeyPair() {
+        return keyPair;
+    }
+
+    public SessionAuthenticator getSessionAuthenticator() {
+        return sessionAuthenticator;
     }
 
     public static void main(String[] args) {
@@ -46,6 +64,10 @@ public final class VibMC {
 
     public void start() {
         running = true;
+        if (!checkSecurityConfig()) {
+            running = false;
+            return;
+        }
         maybePromptSkinPlugin();
         try {
             networkServer.start(config.address(), config.port());
@@ -54,6 +76,12 @@ public final class VibMC {
             running = false;
             return;
         }
+
+        // A world saved before dimensions existed has no way into the Nether or End, so
+        // make sure the spawn area has a portal and the End has its exit. Existing terrain
+        // is otherwise untouched.
+        net.vibmc.world.PortalTravel.ensureSpawnPortal(worldManager.getMainWorld());
+        net.vibmc.world.PortalTravel.ensureEndExitPortal(worldManager.getEnd());
 
         pluginManager.loadPlugins("plugins");
         pluginManager.onLoad();
@@ -66,7 +94,8 @@ public final class VibMC {
         tickThread.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
-        logger.info("vib-MC started on %s:%d (seed %d)", config.address(), config.port(), config.seed());
+        logger.info("vib-MC started on %s:%d (seed %d)", config.address(), config.port(),
+                worldManager.getMainWorld().seed());
 
         while (running) {
             try {
@@ -75,6 +104,37 @@ public final class VibMC {
                 break;
             }
         }
+    }
+
+    /**
+     * Refuses to start on a configuration that would silently let anyone log in as anyone.
+     *
+     * <p>Legacy forwarding trusts whatever identity the proxy sends. That is fine when the
+     * proxy authenticated the player, but with {@code online-mode=false} nothing anywhere
+     * in the chain checks the account, so the combination is rejected rather than started
+     * in a state the operator would reasonably believe is secure.
+     *
+     * @return true if it is safe to continue starting
+     */
+    private boolean checkSecurityConfig() {
+        if (config.proxyLegacy() && !config.onlineMode()) {
+            logger.severe("proxy-mode=legacy requires online-mode=true.");
+            logger.severe("Legacy forwarding trusts the identity the proxy sends, so the proxy "
+                    + "must be the thing doing the authenticating. With online-mode=false nobody "
+                    + "checks the account at all and any client could claim any username.");
+            logger.severe("Set online-mode=true, or set proxy-mode=none for a direct-connect server.");
+            return false;
+        }
+        if (config.proxyLegacy() && config.proxyTrustedAddress().isEmpty()) {
+            logger.warn("proxy-mode=legacy with a blank proxy-trusted-address: any host that can "
+                    + "reach this port can claim any identity. Only do this if the port is "
+                    + "firewalled to the proxy.");
+        }
+        if (!config.onlineMode()) {
+            logger.warn("online-mode=false: players are not verified with Mojang and skins come "
+                    + "from the skin-url settings rather than their real accounts.");
+        }
+        return true;
     }
 
     private void maybePromptSkinPlugin() {
@@ -105,7 +165,9 @@ public final class VibMC {
             long start = System.currentTimeMillis();
             tickCounter++;
             pluginManager.fireTickStart();
-            worldManager.getMainWorld().tick(tickCounter);
+            for (net.vibmc.world.World world : worldManager.getWorlds()) {
+                world.tick(tickCounter);
+            }
             playerManager.tickAll();
             networkServer.tick();
             pluginManager.fireTickEnd();
@@ -134,17 +196,41 @@ public final class VibMC {
         }
     }
 
+    /**
+     * Shuts the server down, finishing all shutdown work before the process is allowed to
+     * exit.
+     *
+     * <p>{@code running} is cleared <em>last</em>, deliberately. This can be called from
+     * the console thread or the JVM shutdown hook, while {@link #start} is parked waiting
+     * for {@code running} to go false. Clearing it first would release the main thread,
+     * let {@code main} return, and let the JVM tear down the daemon threads mid-save -
+     * which silently lost both the shutdown kick and the world save.
+     */
     public void stop() {
-        if (!running) return;
-        running = false;
-        logger.info("Shutting down...");
-        if (config.saveOnStop()) {
-            int written = worldManager.saveAll();
-            logger.info("Saved %d chunk%s on shutdown", written, written == 1 ? "" : "s");
+        synchronized (stopLock) {
+            if (stopping) {
+                return;
+            }
+            stopping = true;
+            logger.info("Shutting down...");
+
+            // Kick players before saving so they see why the server went away, rather than
+            // timing out into a generic connection-lost screen.
+            String message = config.shutdownMessage();
+            for (net.vibmc.entity.PlayerEntity player : playerManager.getOnlinePlayers()) {
+                player.kick(message);
+            }
+
+            if (config.saveOnStop()) {
+                int written = worldManager.saveAll();
+                logger.info("Saved %d chunk%s on shutdown", written, written == 1 ? "" : "s");
+            }
+            pluginManager.onDisable();
+            networkServer.stop();
+            logger.info("vib-MC stopped");
+
+            running = false;
         }
-        pluginManager.onDisable();
-        networkServer.stop();
-        logger.info("vib-MC stopped");
     }
 
     public boolean isRunning() {

@@ -1,8 +1,10 @@
 package net.vibmc.player;
 
+import net.vibmc.auth.GameProfile;
 import net.vibmc.command.CommandSender;
 import net.vibmc.entity.PlayerEntity;
 import net.vibmc.network.ClientConnection;
+import net.vibmc.server.ServerConfig;
 import net.vibmc.network.PacketBuffer;
 import net.vibmc.plugin.event.ChatEvent;
 import net.vibmc.plugin.event.PlayerJoinEvent;
@@ -26,9 +28,25 @@ public class PlayerManager {
         this.byName = new ConcurrentHashMap<>();
     }
 
-    public void addPlayer(PlayerEntity player) {
+    /**
+     * Adds a player to the online registry, without any networking.
+     *
+     * <p>Kept separate from {@link #addPlayer} so the lookup tables have one owner and can
+     * be reasoned about (and tested) without a live connection behind every player.
+     */
+    public void register(PlayerEntity player) {
         players.put(player.getUuid(), player);
         byName.put(player.getUsername().toLowerCase(), player);
+    }
+
+    /** Removes a player from the online registry, without any networking. */
+    public void unregister(PlayerEntity player) {
+        players.remove(player.getUuid());
+        byName.remove(player.getUsername().toLowerCase());
+    }
+
+    public void addPlayer(PlayerEntity player) {
+        register(player);
 
         VibMC server = VibMC.getInstance();
         PluginManager pluginManager = server.getPluginManager();
@@ -50,8 +68,7 @@ public class PlayerManager {
     }
 
     public void removePlayer(PlayerEntity player) {
-        players.remove(player.getUuid());
-        byName.remove(player.getUsername().toLowerCase());
+        unregister(player);
 
         VibMC server = VibMC.getInstance();
         PluginManager pluginManager = server.getPluginManager();
@@ -160,7 +177,8 @@ public class PlayerManager {
         }
         for (Long key : wanted) {
             if (player.getSentChunks().add(key)) {
-                sendChunk(player.getConnection(), (int) (key >> 32), (int) (key & 0xFFFFFFFFL));
+                sendChunk(player.getConnection(), player.getWorld(),
+                        (int) (key >> 32), (int) (key & 0xFFFFFFFFL));
             }
         }
         player.setLoadedChunk(cx, cz);
@@ -189,7 +207,7 @@ public class PlayerManager {
         int viewDist = VibMC.getInstance().getConfig().getViewDistance();
         for (int dx = -viewDist; dx <= viewDist; dx++) {
             for (int dz = -viewDist; dz <= viewDist; dz++) {
-                sendChunk(conn, centerX + dx, centerZ + dz);
+                sendChunk(conn, world, centerX + dx, centerZ + dz);
                 player.getSentChunks().add(chunkKey(centerX + dx, centerZ + dz));
             }
         }
@@ -198,10 +216,39 @@ public class PlayerManager {
         sendGameState(conn);
     }
 
-    private String texturesProperty(PlayerEntity player) {
-        if (!VibMC.getInstance().getConfig().skinPluginEnabled()) return null;
-        String url = VibMC.getInstance().getConfig().skinUrlFor(player.getUsername());
-        if (url.isEmpty()) return null;
+    /**
+     * The textures blob to advertise for a player, and its signature when there is one.
+     *
+     * <p>An explicit {@code /skin} override wins, because that is a deliberate choice by
+     * an operator. Otherwise an authenticated player keeps the real, Mojang-signed skin
+     * from their profile - re-signing is impossible, so the signature is passed through
+     * untouched and vanilla clients render the skin normally. A configured global
+     * {@code skin-url} is the last resort, and is necessarily unsigned.
+     *
+     * @return {@code {value, signature}}, signature possibly null, or null for no textures
+     */
+    private String[] texturesProperty(PlayerEntity player) {
+        ServerConfig config = VibMC.getInstance().getConfig();
+        if (config.skinPluginEnabled()) {
+            String override = config.skinUrlOverrideFor(player.getUsername());
+            if (!override.isEmpty()) {
+                return new String[]{encodeSkinUrl(player, override), null};
+            }
+        }
+        GameProfile profile = player.getProfile();
+        if (profile != null && profile.hasTextures()) {
+            return new String[]{profile.texturesValue(), profile.texturesSignature()};
+        }
+        if (config.skinPluginEnabled()) {
+            String url = config.skinUrl();
+            if (!url.isEmpty()) {
+                return new String[]{encodeSkinUrl(player, url), null};
+            }
+        }
+        return null;
+    }
+
+    private static String encodeSkinUrl(PlayerEntity player, String url) {
         String json = "{\"timestamp\":" + System.currentTimeMillis()
                 + ",\"profileId\":\"" + player.getUuid() + "\""
                 + ",\"profileName\":\"" + player.getUsername() + "\""
@@ -228,14 +275,21 @@ public class PlayerManager {
                     b.writeLong(uuid.getLeastSignificantBits());
                     if (action == 0) {
                         b.writeString(p.getUsername());
-                        String textures = texturesProperty(p);
+                        String[] textures = texturesProperty(p);
                         if (textures == null) {
                             b.writeVarInt(0);
                         } else {
                             b.writeVarInt(1);
                             b.writeString("textures");
-                            b.writeString(textures);
-                            b.writeBoolean(false);
+                            b.writeString(textures[0]);
+                            // Signed properties keep Mojang's signature so the client
+                            // trusts the skin; locally configured ones have none.
+                            if (textures[1] == null) {
+                                b.writeBoolean(false);
+                            } else {
+                                b.writeBoolean(true);
+                                b.writeString(textures[1]);
+                            }
                         }
                         b.writeVarInt(p.getGameMode());
                         b.writeVarInt(0);
@@ -254,7 +308,7 @@ public class PlayerManager {
             public void write(PacketBuffer b) {
                 b.writeInt(entityId);
                 b.writeByte(player.getGameMode());
-                b.writeInt(0);
+                b.writeInt(player.getWorld().dimension().protocolId());
                 b.writeByte(1);
                 b.writeByte((byte) VibMC.getInstance().getConfig().getMaxPlayers());
                 b.writeString("default");
@@ -355,8 +409,8 @@ public class PlayerManager {
         });
     }
 
-    private void sendChunk(ClientConnection conn, int chunkX, int chunkZ) {
-        Chunk chunk = VibMC.getInstance().getWorldManager().getMainWorld().getChunk(chunkX, chunkZ);
+    private void sendChunk(ClientConnection conn, World world, int chunkX, int chunkZ) {
+        Chunk chunk = world.getChunk(chunkX, chunkZ);
         if (chunk == null) return;
 
         // 1.12.2 sends the chunk data raw (no zlib layer); only network-level compression applies

@@ -43,23 +43,16 @@ public class ServerConfig {
         return getString("level-name", "world");
     }
 
-    public long seed() {
-        return getLong("seed", 0L);
-    }
-
     /**
-     * {@code seed=0} (the default in a fresh server.properties) means "no seed was
-     * chosen" rather than a literal seed of zero, so a brand-new world rolls a random
-     * one instead of every fresh install generating the same terrain.
+     * The raw {@code seed} setting. Blank means "no seed chosen" - a new world rolls a
+     * random one. Resolution lives in {@link net.vibmc.world.Seeds}; this stays a plain
+     * string so blank, numeric and text seeds are all representable.
+     *
+     * <p>Deliberately never written back: the world's own level.dat records the seed it
+     * was generated with, so an existing server.properties is left untouched.
      */
-    public boolean hasExplicitSeed() {
-        return seed() != 0L;
-    }
-
-    /** Records the seed a new world was actually generated with, so future restarts see it. */
-    public void setSeed(long seed) {
-        properties.setProperty("seed", String.valueOf(seed));
-        persist();
+    public String seedSetting() {
+        return getString("seed", "").trim();
     }
 
     public int autosaveIntervalTicks() {
@@ -68,6 +61,27 @@ public class ServerConfig {
 
     public boolean saveOnStop() {
         return getBoolean("save-on-stop", true);
+    }
+
+    public String shutdownMessage() {
+        return getString("shutdown-message", "Server closed");
+    }
+
+    /** Proxy forwarding mode: {@code none} or {@code legacy} (BungeeCord/Velocity legacy). */
+    public String proxyMode() {
+        return getString("proxy-mode", "none").trim().toLowerCase();
+    }
+
+    public boolean proxyLegacy() {
+        return "legacy".equals(proxyMode());
+    }
+
+    /**
+     * Address the proxy is allowed to connect from. Blank allows any source, which is only
+     * safe when the server port is already firewalled to the proxy.
+     */
+    public String proxyTrustedAddress() {
+        return getString("proxy-trusted-address", "127.0.0.1").trim();
     }
 
     public String motd() {
@@ -103,13 +117,23 @@ public class ServerConfig {
     }
 
     public String skinUrlFor(String username) {
+        String override = skinUrlOverrideFor(username);
+        return override.isEmpty() ? skinUrl() : override;
+    }
+
+    /**
+     * Only the per-player {@code skin-url.<name>} override, without falling back to the
+     * global skin. An override is a deliberate operator choice, so it outranks even an
+     * authenticated player's real Mojang skin.
+     */
+    public String skinUrlOverrideFor(String username) {
         if (username != null) {
             String perPlayer = properties.getProperty("skin-url." + username.toLowerCase());
             if (perPlayer != null && !perPlayer.trim().isEmpty()) {
                 return perPlayer.trim();
             }
         }
-        return skinUrl();
+        return "";
     }
 
     public boolean hasSkinPluginSetting() {

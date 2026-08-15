@@ -21,7 +21,18 @@ public enum Block {
     DIORITE((short) 17, 1.5f, 6.0f),
     COAL_ORE((short) 18, 3.0f, 5.0f),
     IRON_ORE((short) 19, 3.0f, 5.0f),
-    SNOW((short) 20, 0.2f, 1.0f);
+    SNOW((short) 20, 0.2f, 1.0f),
+    DOOR_TOP((short) 21, 1.0f, 2.5f), // upper half of a door; same protocol id as DOOR, different metadata
+    PLANKS((short) 22, 2.0f, 3.0f),
+    COBBLESTONE((short) 23, 2.0f, 6.0f),
+    NETHERRACK((short) 24, 0.4f, 2.0f),
+    SOUL_SAND((short) 25, 0.5f, 2.5f),
+    GLOWSTONE((short) 26, 0.3f, 1.5f),
+    OBSIDIAN((short) 27, 50.0f, 1200.0f),
+    NETHER_PORTAL((short) 28, -1.0f, 0.0f),
+    END_STONE((short) 29, 3.0f, 45.0f),
+    END_PORTAL((short) 30, -1.0f, 3600000.0f),
+    END_PORTAL_FRAME((short) 31, -1.0f, 3600000.0f);
 
     private final short id;
     private final float hardness;
@@ -51,6 +62,8 @@ public enum Block {
                 return 5; // stone:5
             case DIORITE:
                 return 3; // stone:3
+            case DOOR_TOP:
+                return 8; // door upper-half flag bit
             default:
                 return 0;
         }
@@ -100,7 +113,7 @@ public enum Block {
             case SAND:
                 return 12;
             case GRAVEL:
-                return 14;
+                return 13;
             case BEDROCK:
                 return 7;
             case CHEST:
@@ -110,6 +123,7 @@ public enum Block {
             case CRAFTING_TABLE:
                 return 58;
             case DOOR:
+            case DOOR_TOP:
                 return 64;
             case TRAPDOOR:
                 return 96;
@@ -122,6 +136,26 @@ public enum Block {
                 return 15;
             case SNOW:
                 return 80; // snow block (full cube, not the thin snow layer)
+            case PLANKS:
+                return 5; // oak planks
+            case COBBLESTONE:
+                return 4;
+            case NETHERRACK:
+                return 87;
+            case SOUL_SAND:
+                return 88;
+            case GLOWSTONE:
+                return 89;
+            case OBSIDIAN:
+                return 49;
+            case NETHER_PORTAL:
+                return 90;
+            case END_STONE:
+                return 121;
+            case END_PORTAL:
+                return 119;
+            case END_PORTAL_FRAME:
+                return 120;
             default:
                 return 0;
         }
