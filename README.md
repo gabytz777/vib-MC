@@ -11,7 +11,7 @@
 
 **vibed into existence** — a Minecraft server made entirely by AI, one prompt at a time.
 
-> ⚠️ **Latest release: v0.0.5** — Nether and End are real, portals travel, and online mode verifies you with Mojang. This whole thing is still being coded by an AI. YMMV.
+> ⚠️ **Latest release: v0.0.5** — online mode verifies you with Mojang, Nether and End generate (portal travel still janky). This whole thing is still being coded by an AI. YMMV.
 
 </div>
 
@@ -62,9 +62,9 @@
 | ✅ | Camera moves (chunk streaming works) |
 | ✅ | Plugin API |
 | ✅ | Mobs that exist |
-| ✅ | Nether (lava seas, caverns, glowstone, the works) |
-| ✅ | End (floating islands, arrival platform) |
-| ✅ | Portals (travel both ways) |
+| ⚠️ | Nether (generates; travel is janky) |
+| ⚠️ | End (generates; arrival platform is there) |
+| ⚠️ | Portals (built, but janky) |
 | ✅ | Online mode (Mojang-verified logins, real skins) |
 | ❌ | Working game (soon™) |
 
