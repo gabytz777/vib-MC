@@ -3,10 +3,26 @@ package net.vibmc.world.gen;
 public class TerrainGenerator {
     private static final long DEFAULT_SEED = 0x1B2C3D4E5F6A7B8CL;
 
+    /** Must match Chunk's BASE_SURFACE/SEA_LEVEL: the surface formula is shared so
+     *  structures (which need a column's height before its chunk is generated) place
+     *  on exactly the same ground the terrain loop will produce. */
+    private static final int BASE_SURFACE = 9;
+    private static final int SEA_LEVEL = 13;
+
     private final long seed;
 
     public TerrainGenerator(long seed) {
         this.seed = seed != 0 ? seed : DEFAULT_SEED;
+    }
+
+    /** The same surface-height formula Chunk uses when generating terrain. */
+    public int surfaceHeight(int worldX, int worldZ) {
+        double n = fbm(worldX * 0.05, worldZ * 0.05, 2);
+        return BASE_SURFACE + Math.max(0, Math.min(6, (int) ((n + 1.0) * 5.0)));
+    }
+
+    public boolean isDryLand(int worldX, int worldZ) {
+        return surfaceHeight(worldX, worldZ) >= SEA_LEVEL;
     }
 
     public int getHeight(int x, int z) {

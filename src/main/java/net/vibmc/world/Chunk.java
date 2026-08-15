@@ -2,13 +2,13 @@ package net.vibmc.world;
 
 import net.vibmc.world.gen.Biome;
 import net.vibmc.world.gen.TerrainGenerator;
+import net.vibmc.world.gen.structure.VillageGenerator;
 
 import java.io.ByteArrayOutputStream;
 
 public class Chunk {
     private static final int WORLD_HEIGHT = 256;
     private static final int SEA_LEVEL = 13;      // water fills up to 4 deep (surface 9 -> y10..13)
-    private static final int BASE_SURFACE = 9;    // grass top: 1 bedrock + 7 stone-mix + 2 grass
     private static final int BITS_PER_BLOCK = 13; // canonical 1.12.2 global palette (vanilla uses 13 bits); prismarine clamps to 12 for its own storage
     private static final int SECTION_LONGS = 4096 * BITS_PER_BLOCK / 64;
 
@@ -50,8 +50,7 @@ public class Chunk {
                 Biome biome = chunk.biomeAt(x, z);
 
                 // surface 9..15 from noise: grass top at y=surface
-                double n = terrain.fbm(worldX * 0.05, worldZ * 0.05, 2);
-                int surface = BASE_SURFACE + clamp((int) ((n + 1.0) * 5.0), 0, 6);
+                int surface = terrain.surfaceHeight(worldX, worldZ);
 
                 chunk.setBlock(x, 0, z, Block.BEDROCK.id());
                 for (int y = 1; y <= surface - 2; y++) {
@@ -80,6 +79,7 @@ public class Chunk {
         }
 
         carveCaves(chunk, terrain);
+        VillageGenerator.apply(chunk, terrain);
 
         // trees: biome drives density. Deserts get none, forests get more.
         Biome centerBiome = chunk.biomeAt(8, 8);
@@ -302,10 +302,6 @@ public class Chunk {
                 }
             }
         }
-    }
-
-    private static int clamp(int value, int min, int max) {
-        return Math.max(min, Math.min(max, value));
     }
 
     public void setBlock(int x, int y, int z, short id) {
