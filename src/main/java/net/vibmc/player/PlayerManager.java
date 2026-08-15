@@ -150,7 +150,11 @@ public class PlayerManager {
         }
         for (Long key : new ArrayList<>(player.getSentChunks())) {
             if (!wanted.contains(key)) {
-                sendUnloadChunk(player.getConnection(), (int) (key >> 32), (int) (key & 0xFFFFFFFFL));
+                // Not sending an actual Unload Chunk packet here: neither 0x1D nor 0x1C
+                // is the real protocol-340 id (both caused real-client decode crashes -
+                // see crash investigation) and the correct id hasn't been confirmed yet.
+                // The client just keeps rendering these chunks a bit longer, which costs
+                // a little extra client memory but is otherwise harmless.
                 player.getSentChunks().remove(key);
             }
         }
@@ -164,17 +168,6 @@ public class PlayerManager {
 
     private static long chunkKey(int x, int z) {
         return (((long) x) << 32) ^ (z & 0xffffffffL);
-    }
-
-    private void sendUnloadChunk(ClientConnection conn, int chunkX, int chunkZ) {
-        conn.sendPacket(new Packet() {
-            public int getPacketId() { return 0x1D; }
-            public void read(PacketBuffer b) {}
-            public void write(PacketBuffer b) {
-                b.writeInt(chunkX);
-                b.writeInt(chunkZ);
-            }
-        });
     }
 
     private void sendJoinPackets(PlayerEntity player) {
@@ -219,7 +212,12 @@ public class PlayerManager {
     private void sendPlayerInfo(ClientConnection conn, int action, Collection<PlayerEntity> targets) {
         List<PlayerEntity> list = new ArrayList<>(targets);
         conn.sendPacket(new Packet() {
-            public int getPacketId() { return 0x04; }
+            // Player List Item is 0x2E at protocol 340 (1.12.2), not 0x04 (that's
+            // Spawn Painting - the wrong ID here caused the client to try parsing
+            // this packet's skin-texture payload as a painting motive name, which
+            // has a short max-length string field, hence "received string length
+            // is longer than maximum allowed (45 > 13)").
+            public int getPacketId() { return 0x2E; }
             public void read(PacketBuffer b) {}
             public void write(PacketBuffer b) {
                 b.writeVarInt(action);

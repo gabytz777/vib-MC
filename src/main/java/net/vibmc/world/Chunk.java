@@ -71,15 +71,15 @@ public class Chunk {
                     // grass: 2 layers
                     chunk.setBlock(x, surface - 1, z, Block.GRASS.id());
                     chunk.setBlock(x, surface, z, Block.GRASS.id());
-                    if (biome == Biome.SNOW) {
-                        chunk.setBlock(x, surface + 1, z, Block.SNOW.id());
-                    }
+                    // TODO: snow-biome surface cap (Block.SNOW) disabled pending
+                    // real-client verification - see biome/village crash investigation.
                 }
             }
         }
 
         carveCaves(chunk, terrain);
-        VillageGenerator.apply(chunk, terrain);
+        // TODO: villages disabled pending real-client verification - see crash investigation.
+        // VillageGenerator.apply(chunk, terrain);
 
         // trees: biome drives density. Deserts get none, forests get more.
         Biome centerBiome = chunk.biomeAt(8, 8);
@@ -383,8 +383,13 @@ public class Chunk {
             byte[] skyLight = buildSkyLight(section, baseY);
             out.write(skyLight, 0, skyLight.length);
         }
-        // ground-up continuous: 256 bytes of biome data, one per column
-        out.write(biomes, 0, biomes.length);
+        // ground-up continuous: 256 bytes of biome data, one per column.
+        // TODO: sending the real computed biomes[] array here is disabled pending
+        // real-client verification - see biome/village crash investigation. Reverted
+        // to the constant-Plains byte stream that was previously confirmed working.
+        for (int i = 0; i < biomes.length; i++) {
+            out.write(Biome.PLAINS.protocolId());
+        }
         return out.toByteArray();
     }
 
