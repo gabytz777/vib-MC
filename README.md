@@ -58,7 +58,7 @@
 | ✅ | Terrain renders (13-bit chunk data, vanilla client sees it) |
 | ✅ | Camera moves (chunk streaming works) |
 | ✅ | Plugin API |
-| ✅ | Mobs that exist |
+| ❌ | Mobs that exist |
 | ⚠️ | Nether (generates; travel is janky) |
 | ⚠️ | End (generates; arrival platform is there) |
 | ⚠️ | Portals (built, but janky) |
