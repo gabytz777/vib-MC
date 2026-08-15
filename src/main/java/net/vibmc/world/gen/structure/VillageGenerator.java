@@ -138,8 +138,11 @@ public final class VillageGenerator {
             }
         }
 
-        // basic decoration
-        setWorldBlock(chunk, centerX - 1, y + 1, centerZ - 1, Block.CHEST.id());
+        // Basic decoration. CHEST is deliberately not used here: it renders via a
+        // TileEntity client-side, and this server has no tile-entity/NBT plumbing yet
+        // (chunk packets always claim zero block entities), so a raw chest block with
+        // no matching tile entity is a known real-client crash. Revisit once tile
+        // entities are actually implemented.
         setWorldBlock(chunk, centerX + 1, y + 1, centerZ - 1, Block.CRAFTING_TABLE.id());
     }
 
