@@ -11,8 +11,8 @@ public class SaveAllCommand extends Command {
 
     @Override
     public boolean execute(CommandSender sender, String[] args) {
-        VibMC.getInstance().getWorldManager().getMainWorld().chunkManager().saveAll();
-        sender.sendMessage("{\"text\":\"§aWorld saved.\"}");
+        int written = VibMC.getInstance().getWorldManager().saveAll();
+        sender.sendMessage("{\"text\":\"§aWorld saved (" + written + " chunk" + (written == 1 ? "" : "s") + " written).\"}");
         return true;
     }
 }

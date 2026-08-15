@@ -8,6 +8,7 @@ import net.vibmc.server.util.Logger;
 import net.vibmc.world.WorldManager;
 
 import java.io.IOException;
+import java.io.Console;
 
 public final class VibMC {
     private static VibMC instance;
@@ -45,6 +46,7 @@ public final class VibMC {
 
     public void start() {
         running = true;
+        maybePromptSkinPlugin();
         try {
             networkServer.start(config.address(), config.port());
         } catch (IOException e) {
@@ -75,6 +77,29 @@ public final class VibMC {
         }
     }
 
+    private void maybePromptSkinPlugin() {
+        if (config.hasSkinPluginSetting()) {
+            return;
+        }
+        Console console = System.console();
+        if (console == null) {
+            config.enableSkinPlugin(true);
+            logger.info("No interactive console detected; Skins plugin enabled by default.");
+            return;
+        }
+        logger.info("Would you like to add this plugin? (y/n)");
+        logger.info("  Skins plugin - lets players set a custom skin with /skin set <url>.");
+        logger.info("  Skins apply to everyone online instantly and can be changed anytime.");
+        String line = console.readLine();
+        boolean enable = line != null && (line.trim().equalsIgnoreCase("y") || line.trim().equalsIgnoreCase("yes"));
+        config.enableSkinPlugin(enable);
+        if (enable) {
+            logger.info("Skins plugin added. Use /skin set <url> in-game to change your skin.");
+        } else {
+            logger.info("Skins plugin skipped. You can add it later by setting skin-plugin-enabled=true in server.properties.");
+        }
+    }
+
     private void tickLoop() {
         while (running) {
             long start = System.currentTimeMillis();
@@ -92,6 +117,14 @@ public final class VibMC {
                 }
             }
 
+            int autosaveInterval = config.autosaveIntervalTicks();
+            if (autosaveInterval > 0 && tickCounter % autosaveInterval == 0) {
+                int written = worldManager.saveAll();
+                if (written > 0) {
+                    logger.info("Autosaved %d chunk%s", written, written == 1 ? "" : "s");
+                }
+            }
+
             long elapsed = System.currentTimeMillis() - start;
             try {
                 Thread.sleep(Math.max(1, 50 - elapsed));
@@ -105,6 +138,10 @@ public final class VibMC {
         if (!running) return;
         running = false;
         logger.info("Shutting down...");
+        if (config.saveOnStop()) {
+            int written = worldManager.saveAll();
+            logger.info("Saved %d chunk%s on shutdown", written, written == 1 ? "" : "s");
+        }
         pluginManager.onDisable();
         networkServer.stop();
         logger.info("vib-MC stopped");

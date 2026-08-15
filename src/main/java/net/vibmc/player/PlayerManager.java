@@ -93,6 +93,13 @@ public class PlayerManager {
         return players.size();
     }
 
+    public void refreshSkin(PlayerEntity target) {
+        for (PlayerEntity other : players.values()) {
+            sendPlayerInfo(other.getConnection(), 4, Collections.singletonList(target));
+            sendPlayerInfo(other.getConnection(), 0, Collections.singletonList(target));
+        }
+    }
+
     public void broadcastMessage(String message) {
         for (PlayerEntity player : players.values()) {
             player.sendMessage(message);
@@ -199,6 +206,7 @@ public class PlayerManager {
     }
 
     private String texturesProperty(PlayerEntity player) {
+        if (!VibMC.getInstance().getConfig().skinPluginEnabled()) return null;
         String url = VibMC.getInstance().getConfig().skinUrlFor(player.getUsername());
         if (url.isEmpty()) return null;
         String json = "{\"timestamp\":" + System.currentTimeMillis()

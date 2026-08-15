@@ -1,6 +1,7 @@
 package net.vibmc.world;
 
 import net.vibmc.entity.Entity;
+import net.vibmc.world.storage.WorldStorage;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,15 +14,21 @@ public class World {
     private final ChunkManager chunkManager;
     private final TimeSystem timeSystem;
     private final WeatherSystem weatherSystem;
+    private final WorldStorage storage;
     private final List<Entity> entities = new CopyOnWriteArrayList<>();
     private long worldTime;
 
     public World(long seed, String name) {
+        this(seed, name, new WorldStorage(name));
+    }
+
+    public World(long seed, String name, WorldStorage storage) {
         this.seed = seed;
         this.name = name;
+        this.storage = storage;
         this.timeSystem = new TimeSystem();
         this.weatherSystem = new WeatherSystem();
-        this.chunkManager = new ChunkManager(this);
+        this.chunkManager = new ChunkManager(this, storage);
     }
 
     public Chunk chunk(int chunkX, int chunkZ) {
@@ -117,6 +124,14 @@ public class World {
 
     public long getWorldTime() {
         return worldTime;
+    }
+
+    public void setWorldTime(long worldTime) {
+        this.worldTime = worldTime;
+    }
+
+    public WorldStorage storage() {
+        return storage;
     }
 
     public long getDayTime() {

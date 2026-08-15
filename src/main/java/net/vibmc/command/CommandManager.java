@@ -31,6 +31,7 @@ public class CommandManager {
         register(new SaveAllCommand());
         register(new StopCommand());
         register(new ListCommand());
+        register(new SkinCommand());
     }
 
     public void register(Command command) {

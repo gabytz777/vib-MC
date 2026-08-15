@@ -1,5 +1,6 @@
 package net.vibmc.world;
 
+import net.vibmc.world.gen.Biome;
 import net.vibmc.world.gen.TerrainGenerator;
 
 import java.io.ByteArrayOutputStream;
@@ -15,6 +16,10 @@ public class Chunk {
     private final int chunkX;
     private final int chunkZ;
     private final short[] blocks = new short[16 * 16 * WORLD_HEIGHT];
+    private final byte[] biomes = new byte[16 * 16];
+
+    /** Set whenever blocks change, cleared once the chunk has been written to disk. */
+    private volatile boolean dirty;
 
     private Chunk(World world, int chunkX, int chunkZ) {
         this.world = world;
@@ -22,14 +27,27 @@ public class Chunk {
         this.chunkZ = chunkZ;
     }
 
+    /** Rebuilds a chunk from previously saved block data instead of regenerating it. */
+    public static Chunk fromStored(World world, int chunkX, int chunkZ, short[] stored) {
+        Chunk chunk = new Chunk(world, chunkX, chunkZ);
+        System.arraycopy(stored, 0, chunk.blocks, 0, chunk.blocks.length);
+        // Biomes aren't part of the saved chunk format; they're cheap to recompute
+        // deterministically from the seed, same as everything else on a fresh load.
+        computeBiomes(chunk, new TerrainGenerator(world.seed()));
+        chunk.dirty = false;
+        return chunk;
+    }
+
     public static Chunk generate(World world, int chunkX, int chunkZ) {
         Chunk chunk = new Chunk(world, chunkX, chunkZ);
         TerrainGenerator terrain = new TerrainGenerator(world.seed());
+        computeBiomes(chunk, terrain);
 
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 int worldX = chunkX * 16 + x;
                 int worldZ = chunkZ * 16 + z;
+                Biome biome = chunk.biomeAt(x, z);
 
                 // surface 9..15 from noise: grass top at y=surface
                 double n = terrain.fbm(worldX * 0.05, worldZ * 0.05, 2);
@@ -46,19 +64,36 @@ public class Chunk {
                     for (int y = surface + 1; y <= SEA_LEVEL; y++) {
                         chunk.setBlock(x, y, z, Block.WATER.id());
                     }
+                } else if (biome == Biome.DESERT) {
+                    // desert: sand instead of grass, no snow cap
+                    chunk.setBlock(x, surface - 1, z, Block.SAND.id());
+                    chunk.setBlock(x, surface, z, Block.SAND.id());
                 } else {
                     // grass: 2 layers
                     chunk.setBlock(x, surface - 1, z, Block.GRASS.id());
                     chunk.setBlock(x, surface, z, Block.GRASS.id());
+                    if (biome == Biome.SNOW) {
+                        chunk.setBlock(x, surface + 1, z, Block.SNOW.id());
+                    }
                 }
             }
         }
 
         carveCaves(chunk, terrain);
 
-        // trees: ~40% of chunks get one, ~10% get two
-        int roll = terrain.hash(chunkX, chunkZ ^ 0x7E5A) % 100;
-        int trees = roll < 40 ? 1 : (roll < 50 ? 2 : 0);
+        // trees: biome drives density. Deserts get none, forests get more.
+        Biome centerBiome = chunk.biomeAt(8, 8);
+        int trees;
+        if (centerBiome == Biome.DESERT) {
+            trees = 0;
+        } else {
+            int roll = terrain.hash(chunkX, chunkZ ^ 0x7E5A) % 100;
+            if (centerBiome == Biome.FOREST) {
+                trees = roll < 70 ? 2 : (roll < 95 ? 3 : 1); // dense: 1-3 trees
+            } else {
+                trees = roll < 40 ? 1 : (roll < 50 ? 2 : 0); // plains/snow: sparse
+            }
+        }
         for (int t = 0; t < trees; t++) {
             int h = terrain.hash(chunkX * 31 + t, chunkZ ^ 0x3F);
             int x = h % 16;
@@ -76,7 +111,28 @@ public class Chunk {
             int height = 4 + (terrain.hash(x, z ^ 0x11) % 3); // 4..6
             placeTree(chunk, terrain, x, topY, z, height);
         }
+        chunk.dirty = true;
         return chunk;
+    }
+
+    private static void computeBiomes(Chunk chunk, TerrainGenerator terrain) {
+        for (int x = 0; x < 16; x++) {
+            for (int z = 0; z < 16; z++) {
+                int worldX = chunk.chunkX * 16 + x;
+                int worldZ = chunk.chunkZ * 16 + z;
+                chunk.biomes[z * 16 + x] = (byte) Biome.at(terrain, worldX, worldZ).protocolId();
+            }
+        }
+    }
+
+    private Biome biomeAt(int x, int z) {
+        int id = biomes[z * 16 + x] & 0xFF;
+        for (Biome biome : Biome.values()) {
+            if (biome.protocolId() == id) {
+                return biome;
+            }
+        }
+        return Biome.PLAINS;
     }
 
     private static void placeTree(Chunk chunk, TerrainGenerator terrain, int x, int topY, int z, int height) {
@@ -239,7 +295,7 @@ public class Chunk {
                     if (b == Block.STONE.id() || b == Block.ANDESITE.id() || b == Block.DIORITE.id()
                             || b == Block.COAL_ORE.id() || b == Block.IRON_ORE.id()) {
                         chunk.setBlock(x, y, z, Block.AIR.id());
-                    } else if (entrance && (b == Block.GRASS.id() || b == Block.SAND.id())) {
+                    } else if (entrance && (b == Block.GRASS.id() || b == Block.SAND.id() || b == Block.SNOW.id())) {
                         // surface caves can breach the top layers
                         chunk.setBlock(x, y, z, Block.AIR.id());
                     }
@@ -254,8 +310,27 @@ public class Chunk {
 
     public void setBlock(int x, int y, int z, short id) {
         if (inBounds(x, y, z)) {
-            blocks[index(x, y, z)] = id;
+            int index = index(x, y, z);
+            if (blocks[index] != id) {
+                blocks[index] = id;
+                dirty = true;
+            }
         }
+    }
+
+    /** True when this chunk holds changes that are not on disk yet. */
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    /** Marks the chunk as needing a write on the next save. */
+    public void markDirty() {
+        dirty = true;
+    }
+
+    /** Called by the chunk manager once the chunk has been written out. */
+    public void markSaved() {
+        dirty = false;
     }
 
     public short getBlock(int x, int y, int z) {
@@ -312,10 +387,8 @@ public class Chunk {
             byte[] skyLight = buildSkyLight(section, baseY);
             out.write(skyLight, 0, skyLight.length);
         }
-        // ground-up continuous: 256 bytes of biome data (plains)
-        for (int i = 0; i < 256; i++) {
-            out.write(1);
-        }
+        // ground-up continuous: 256 bytes of biome data, one per column
+        out.write(biomes, 0, biomes.length);
         return out.toByteArray();
     }
 

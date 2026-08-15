@@ -20,7 +20,8 @@ public enum Block {
     ANDESITE((short) 16, 1.5f, 6.0f),
     DIORITE((short) 17, 1.5f, 6.0f),
     COAL_ORE((short) 18, 3.0f, 5.0f),
-    IRON_ORE((short) 19, 3.0f, 5.0f);
+    IRON_ORE((short) 19, 3.0f, 5.0f),
+    SNOW((short) 20, 0.2f, 1.0f);
 
     private final short id;
     private final float hardness;
@@ -119,6 +120,8 @@ public enum Block {
                 return 16;
             case IRON_ORE:
                 return 15;
+            case SNOW:
+                return 80; // snow block (full cube, not the thin snow layer)
             default:
                 return 0;
         }
