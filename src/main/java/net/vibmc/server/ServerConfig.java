@@ -67,6 +67,16 @@ public class ServerConfig {
         return getString("difficulty", "easy");
     }
 
+    /** Ticks between automatic world saves. Zero or less disables autosaving. */
+    public int autosaveIntervalTicks() {
+        return getInt("autosave-interval-ticks", 6000);
+    }
+
+    /** Whether the world is written out when the server shuts down. */
+    public boolean saveOnStop() {
+        return getBoolean("save-on-stop", true);
+    }
+
     private String getString(String key, String def) {
         return properties.getProperty(key, def);
     }

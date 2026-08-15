@@ -64,7 +64,8 @@ public final class VibMC {
         tickThread.start();
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::stop));
-        logger.info("vib-MC started on %s:%d (seed %d)", config.address(), config.port(), config.seed());
+        logger.info("vib-MC started on %s:%d (seed %d)", config.address(), config.port(),
+            worldManager.getMainWorld().seed());
 
         while (running) {
             try {
@@ -76,6 +77,7 @@ public final class VibMC {
     }
 
     private void tickLoop() {
+        int autosaveInterval = config.autosaveIntervalTicks();
         while (running) {
             long start = System.currentTimeMillis();
             tickCounter++;
@@ -84,6 +86,13 @@ public final class VibMC {
             playerManager.tickAll();
             networkServer.tick();
             pluginManager.fireTickEnd();
+
+            if (autosaveInterval > 0 && tickCounter % autosaveInterval == 0) {
+                int saved = worldManager.saveAll();
+                if (saved > 0) {
+                    logger.info("Autosaved %d chunk(s)", saved);
+                }
+            }
 
             if (tickCounter % 100 == 0) {
                 long keepAlive = System.currentTimeMillis();
@@ -106,6 +115,10 @@ public final class VibMC {
         running = false;
         logger.info("Shutting down...");
         pluginManager.onDisable();
+        if (config.saveOnStop()) {
+            int saved = worldManager.saveAll();
+            logger.info("Saved %d chunk(s) to %s", saved, worldManager.getMainWorld().storage().worldDir());
+        }
         networkServer.stop();
         logger.info("vib-MC stopped");
     }

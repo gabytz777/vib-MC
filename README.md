@@ -43,6 +43,7 @@
 | ✅ | Terrain generates (somewhere) |
 | ✅ | Terrain renders (13-bit chunk data, vanilla client sees it) |
 | ✅ | Camera moves (chunk streaming works) |
+| ✅ | Worlds save and reload (chunks persist to disk) |
 | ✅ | Plugin API |
 | ✅ | Mobs that exist |
 | ❌ | Nether (who needs it) |
@@ -62,6 +63,21 @@ java -jar build/libs/vib-mc.jar
 
 Server starts on port 25565 by default. Edit `server.properties` after first run.
 
+On first start the server creates `plugins/` and the world directory named by
+`level-name` (default `world/`):
+
+```
+world/
+  level.dat            seed, elapsed time, time of day, weather
+  region/
+    r.<x>.<z>.chunk    gzipped block data, one file per chunk
+```
+
+Chunks are written when they change: on `/save-all`, every `autosave-interval-ticks`
+(default 6000, set to 0 to disable), and on shutdown unless `save-on-stop=false`.
+The seed recorded in `level.dat` wins over `server.properties` for an existing world,
+so changing the seed cannot silently desync terrain you have already generated.
+
 ## Commands
 
 `/help`, `/tp`, `/gamemode`, `/time`, `/weather`, `/give`, `/kill`, `/say`, `/seed`, `/save-all`, `/stop`, `/list`
@@ -69,15 +85,16 @@ Server starts on port 25565 by default. Edit `server.properties` after first run
 ## Architecture
 
 ```
-net.vibmc.server      — makes it go
-net.vibmc.network     — talks to Minecraft
-net.vibmc.world       — blocks and stuff
-net.vibmc.world.gen   — makes the ground
-net.vibmc.entity      — things that move
-net.vibmc.player      — the people
-net.vibmc.plugin      — mod support
-net.vibmc.command     — slash commands
-net.vibmc.permission  — who can do what
+net.vibmc.server        — makes it go
+net.vibmc.network       — talks to Minecraft
+net.vibmc.world         — blocks and stuff
+net.vibmc.world.gen     — makes the ground
+net.vibmc.world.storage — saves the ground
+net.vibmc.entity        — things that move
+net.vibmc.player        — the people
+net.vibmc.plugin        — mod support
+net.vibmc.command       — slash commands
+net.vibmc.permission    — who can do what
 ```
 
 ## Version Requirements

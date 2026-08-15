@@ -16,10 +16,21 @@ public class Chunk {
     private final int chunkZ;
     private final short[] blocks = new short[16 * 16 * WORLD_HEIGHT];
 
+    /** Set whenever blocks change, cleared once the chunk has been written to disk. */
+    private volatile boolean dirty;
+
     private Chunk(World world, int chunkX, int chunkZ) {
         this.world = world;
         this.chunkX = chunkX;
         this.chunkZ = chunkZ;
+    }
+
+    /** Rebuilds a chunk from previously saved block data instead of regenerating it. */
+    public static Chunk fromStored(World world, int chunkX, int chunkZ, short[] stored) {
+        Chunk chunk = new Chunk(world, chunkX, chunkZ);
+        System.arraycopy(stored, 0, chunk.blocks, 0, chunk.blocks.length);
+        chunk.dirty = false;
+        return chunk;
     }
 
     public static Chunk generate(World world, int chunkX, int chunkZ) {
@@ -75,8 +86,27 @@ public class Chunk {
 
     public void setBlock(int x, int y, int z, short id) {
         if (inBounds(x, y, z)) {
-            blocks[index(x, y, z)] = id;
+            int index = index(x, y, z);
+            if (blocks[index] != id) {
+                blocks[index] = id;
+                dirty = true;
+            }
         }
+    }
+
+    /** True when this chunk holds changes that are not on disk yet. */
+    public boolean isDirty() {
+        return dirty;
+    }
+
+    /** Marks the chunk as needing a write on the next save. */
+    public void markDirty() {
+        dirty = true;
+    }
+
+    /** Called by the chunk manager once the chunk has been written out. */
+    public void markSaved() {
+        dirty = false;
     }
 
     public short getBlock(int x, int y, int z) {
