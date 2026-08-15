@@ -14,9 +14,6 @@
 > ⚠️ **Latest release: v0.0.5** — online mode verifies you with Mojang, Nether and End generate (portal travel still janky). This whole thing is still being coded by an AI. YMMV.
 
 </div>
-
-![vib-MC screenshot](https://slopmadebymestudios.lol/files/vibmc-screenshot.png)
-
 ---
 
 `vib-MC` is a Minecraft server (protocol 340 / 1.12.2) that was **entirely vibecoded by AI**. No human wrote any of this. It connects, generates terrain, and occasionally works. The latest release runs on Java 8 or newer, and so does building from source.
