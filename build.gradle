@@ -40,7 +40,7 @@ jar {
         attributes(
             'Main-Class': 'net.vibmc.server.VibMC',
             'Implementation-Title': 'vib-MC',
-            'Implementation-Version': '0.0.6'
+            'Implementation-Version': '0.0.5'
         )
     }
     archiveBaseName = 'vib-mc'

@@ -7,11 +7,11 @@
 [![Vibecoded](https://img.shields.io/badge/Vibecoded-ff69b4?style=for-the-badge)]()
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.12.2-blue?style=for-the-badge&logo=minecraft)]()
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)]()
-[![Release](https://img.shields.io/badge/Release-v0.0.6-blue?style=for-the-badge)](https://github.com/gabytz777/vib-MC/releases/tag/v0.0.6)
+[![Release](https://img.shields.io/badge/Release-v0.0.5-blue?style=for-the-badge)](https://github.com/gabytz777/vib-MC/releases/tag/v0.0.5)
 
 **vibed into existence** — a Minecraft server made entirely by AI, one prompt at a time.
 
-> ⚠️ **Latest release: v0.0.6** — Nether and End are real, portals travel, and online mode verifies you with Mojang. This whole thing is still being coded by an AI. YMMV.
+> ⚠️ **Latest release: v0.0.5** — Nether and End are real, portals travel, and online mode verifies you with Mojang. This whole thing is still being coded by an AI. YMMV.
 
 </div>
 
@@ -21,7 +21,7 @@
 
 `vib-MC` is a Minecraft server (protocol 340 / 1.12.2) that was **entirely vibecoded by AI**. No human wrote any of this. It connects, generates terrain, and occasionally works. The latest release runs on Java 8 or newer, and so does building from source.
 
-## What's new in v0.0.6 (changes since v0.0.4-hotfix.3)
+## What's new in v0.0.5 (changes since v0.0.4-hotfix.3)
 
 - **The Nether is real** — a netherrack world with caverns, lava seas, soul sand and glowstone, bedrock floor and roof, no sky light
 - **The End is real** — end-stone islands floating in the void with a guaranteed solid arrival platform
@@ -70,7 +70,7 @@
 
 ## Requirements
 
-- **Java 8 or newer** to run v0.0.6 (and every release from v0.0.3 up)
+- **Java 8 or newer** to run v0.0.5 (and every release from v0.0.3 up)
 - **Java 8 or newer** to build from source
 
 ## Quick Start
@@ -111,7 +111,7 @@ net.vibmc.permission  — who can do what
 | ✅ | v0.0.4-hotfix.1 — stable (hotfix applies to all versions) | Java 8 or newer |
 | ✅ | v0.0.4-hotfix.2 — stable (hotfix applies to all versions) | Java 8 or newer |
 | ✅ | v0.0.4-hotfix.3 — stable (hotfix applies to all versions) | Java 8 or newer |
-| ✅ | v0.0.6 — latest, stable | Java 8 or newer |
+| ✅ | v0.0.5 — latest, stable | Java 8 or newer |
 
 Building from source requires **Java 8 or newer** (`options.release = 8`).
 
