@@ -75,7 +75,7 @@ and the way you get to them changed: nothing is handed to you at spawn any more.
 | ✅ | Terrain renders (13-bit chunk data, vanilla client sees it) |
 | ✅ | Camera moves (chunk streaming works) |
 | ✅ | Plugin API |
-| ❌ | Mobs that exist |
+| ❌ | Mobs (no entities are sent to clients yet — players only) |
 | ✅ | Nether (open caverns, lava sea, glowstone, quartz) |
 | ✅ | End (islands, obsidian towers, arrival platform, exit portal) |
 | ✅ | Portals (player-built: flint and steel, or 12 eyes of ender) |
