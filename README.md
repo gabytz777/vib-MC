@@ -35,36 +35,6 @@ and the way you get to them changed: nothing is handed to you at spawn any more.
 - **EULA** — `eula.txt` is written on first start and must be accepted, as with vanilla
 - **Fixed a disconnect under load** — packets were encrypted and queued as two separate steps, so two threads sending at once could put the encrypted stream out of order and drop the client with "Bad packet id"
 
-## What's new in v0.0.5 (changes since v0.0.4-hotfix.3)
-
-- **The Nether is real** — a netherrack world with caverns, lava seas, soul sand and glowstone, bedrock floor and roof, no sky light
-- **The End is real** — end-stone islands floating in the void with a guaranteed solid arrival platform
-- **Portals travel** — stand in a Nether or End portal to cross over (Nether coordinates are the overworld's ÷ 8, the End has a fixed arrival platform); a portal is built for you on the far side if there isn't one, and existing worlds get a spawn portal + End exit portal on startup
-- **Online mode works** — `online-mode=true` by default: logins are verified against Mojang's session servers with the real RSA + AES-128/CFB8 handshake, so players get real UUIDs and their real skins
-- **BungeeCord / Velocity legacy forwarding** — `proxy-mode=legacy` + `proxy-trusted-address` for proxied setups; the server refuses to start on an insecure proxy+offline combo
-- **Trees** — biome-aware oak trees (dense forests, sparse plains, none in deserts)
-- **Seeds** — blank `seed=` rolls a random seed for new worlds, numbers are used as-is, text seeds are hashed deterministically; the saved world's level.dat is the authority
-- **Anti-flight check** — vanilla-style: only sustained unsupported hovering gets kicked, never normal play
-- **Generator refactor** — Overworld / Nether / End behind one `ChunkGenerator` interface
-- **Protocol fixes** — two wrong protocol-340 packet IDs that caused real-client disconnects; villages no longer place chest blocks with no tile entity (crashed clients)
-
-## What's new in v0.0.4 (changes since v0.0.3)
-
-- **Terrain renders on the vanilla 1.12.2 client** — chunk data now uses the canonical 13-bit block encoding (the previous 12-bit format was being misinterpreted as garbage by the notchian client)
-- **New terrain profile** — grass (2 layers) on top, stone mixed with andesite and diorite (7 layers), water up to 4 deep, bedrock at the bottom
-- **Spawn on dry land** — the game finds the nearest dry column instead of dropping you in the sea
-- **Chunk streaming fixes** — partial non-blocking writes are flushed properly so terrain streams in as you move
-- **Protocol fixes** — client status (respawn), client settings, teleport confirm, plugin messages, keep-alive, and position packets handled at the correct 1.12.2 IDs
-- **Andesite/diorite wired up** — stone metadata states (stone:3 diorite, stone:5 andesite) now map correctly on the wire
-
-## Hotfixes — apply to ALL versions
-
-### v0.0.4-hotfix.2
-- **The client actually switches game mode** — `/gamemode` and plugin commands that call `setGameMode` now send the Change Game State packet (0x1E, reason 3) so the creative/spectator UI switch happens in-game instead of only changing server state. Applies to every release: v0.0.1 through v0.0.4.
-
-### v0.0.4-hotfix.1
-- **Slash commands actually execute** — chat messages starting with `/` are now routed to the command system instead of being broadcast as chat, so `/gamemode`, `/tp`, `/time`, `/weather`, `/give` and plugin commands work in-game for the first time. This fix applies to every release: v0.0.1 through v0.0.4.
-
 ## Features
 
 | Status | Feature |
