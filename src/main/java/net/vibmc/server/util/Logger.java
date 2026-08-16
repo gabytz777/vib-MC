@@ -5,11 +5,28 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class Logger {
+    /**
+     * Whether debug lines are printed at all.
+     *
+     * <p>Static because the logger is built before the config is read, and because a
+     * console you cannot type into for the packet chatter is not a console.
+     */
+    private static volatile boolean debugEnabled;
+
     private final String name;
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("HH:mm:ss");
 
     public Logger(String name) {
         this.name = name;
+    }
+
+    /** Turns the debug channel on, from the {@code log-level} setting. */
+    public static void setDebugEnabled(boolean enabled) {
+        debugEnabled = enabled;
+    }
+
+    public static boolean isDebugEnabled() {
+        return debugEnabled;
     }
 
     public void info(String format, Object... args) {
@@ -25,6 +42,9 @@ public class Logger {
     }
 
     public void debug(String format, Object... args) {
+        if (!debugEnabled) {
+            return;
+        }
         log("DEBUG", System.out, format, args);
     }
 

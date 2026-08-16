@@ -99,6 +99,23 @@ public class PacketBuffer {
         return bytes;
     }
 
+    /**
+     * Reads a 1.12.2 packed block position.
+     *
+     * <p>Each field is signed, so the bits are shifted up to the top of a long and back
+     * down again - an arithmetic shift sign-extends, which is what turns the raw 26/12/26
+     * bit fields into negative coordinates.
+     *
+     * @return {@code {x, y, z}}
+     */
+    public int[] readPosition() {
+        long value = readLong();
+        int x = (int) (value >> 38);
+        int y = (int) ((value << 26) >> 52);
+        int z = (int) ((value << 38) >> 38);
+        return new int[]{x, y, z};
+    }
+
     // ---- write ----
 
     public void writeByte(int value) {

@@ -104,6 +104,15 @@ public class ServerConfig {
         return getBoolean("online-mode", false);
     }
 
+    /** {@code info} (the default) or {@code debug}, which adds per-packet and per-chunk lines. */
+    public String logLevel() {
+        return getString("log-level", "info").trim().toLowerCase();
+    }
+
+    public boolean debugLogging() {
+        return "debug".equals(logLevel());
+    }
+
     public boolean allowFlight() {
         return getBoolean("allow-flight", false);
     }

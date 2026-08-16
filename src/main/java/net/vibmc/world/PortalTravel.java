@@ -19,10 +19,14 @@ public final class PortalTravel {
     /** Ticks after arriving during which the portal underfoot is ignored. */
     public static final int COOLDOWN_TICKS = 100;
 
-    /** Where players materialise in the End, matching vanilla's fixed platform. */
-    public static final int END_PLATFORM_X = 100;
-    public static final int END_PLATFORM_Y = EndGenerator.ISLAND_SURFACE;
-    public static final int END_PLATFORM_Z = 0;
+    /**
+     * Where players materialise in the End, matching vanilla's fixed platform. It sits
+     * below the island's surface in a patch of void the generator keeps clear, so arriving
+     * puts you on the platform rather than on whatever island happened to grow there.
+     */
+    public static final int END_PLATFORM_X = EndGenerator.PLATFORM_X;
+    public static final int END_PLATFORM_Y = EndGenerator.PLATFORM_Y;
+    public static final int END_PLATFORM_Z = EndGenerator.PLATFORM_Z;
 
     private PortalTravel() {
     }
@@ -38,14 +42,14 @@ public final class PortalTravel {
     /** True when the player is inside a portal of any kind. */
     public static boolean inPortal(PlayerEntity player) {
         short block = blockAt(player);
-        return block == Block.NETHER_PORTAL.id() || block == Block.END_PORTAL.id();
+        return Block.isNetherPortal(block) || block == Block.END_PORTAL.id();
     }
 
     /** Where a player standing in a portal should end up, or null if they are not in one. */
     public static Dimension destinationFor(PlayerEntity player) {
         short block = blockAt(player);
         Dimension current = player.getWorld().dimension();
-        if (block == Block.NETHER_PORTAL.id()) {
+        if (Block.isNetherPortal(block)) {
             return current == Dimension.NETHER ? Dimension.OVERWORLD : Dimension.NETHER;
         }
         if (block == Block.END_PORTAL.id()) {
@@ -90,12 +94,14 @@ public final class PortalTravel {
             return new double[]{x + 0.5, y, z + 0.5};
         }
 
-        // Nether travel: coordinates scale by 8 in the direction of travel.
+        // Nether travel: coordinates scale by 8 in the direction of travel. Floor division,
+        // so a trip from a negative coordinate lands where it should instead of being
+        // rounded back towards the origin.
         int x;
         int z;
         if (destination == Dimension.NETHER) {
-            x = (int) Math.floor(player.getX()) / Dimension.NETHER_SCALE;
-            z = (int) Math.floor(player.getZ()) / Dimension.NETHER_SCALE;
+            x = Math.floorDiv((int) Math.floor(player.getX()), Dimension.NETHER_SCALE);
+            z = Math.floorDiv((int) Math.floor(player.getZ()), Dimension.NETHER_SCALE);
         } else {
             x = (int) Math.floor(player.getX()) * Dimension.NETHER_SCALE;
             z = (int) Math.floor(player.getZ()) * Dimension.NETHER_SCALE;
@@ -118,27 +124,13 @@ public final class PortalTravel {
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
                 for (int y = 1; y < Chunk.WORLD_HEIGHT - 1; y++) {
-                    if (target.getBlock(x + dx, y, z + dz) == Block.NETHER_PORTAL.id()) {
+                    if (Block.isNetherPortal(target.getBlock(x + dx, y, z + dz))) {
                         return y;
                     }
                 }
             }
         }
         return -1;
-    }
-
-    /**
-     * Makes sure the spawn area of a world that predates portals still has the portal it
-     * needs, so an existing save gains a way into the other dimensions instead of being
-     * stuck without one.
-     */
-    public static void ensureSpawnPortal(World overworld) {
-        int x = 0;
-        int z = 0;
-        if (findExistingPortal(overworld, x, z) >= 0) {
-            return;
-        }
-        PortalBuilder.buildLinkedPortal(overworld, x, z);
     }
 
     /**

@@ -130,6 +130,8 @@ public class Chunk {
 
     public byte[] toNetworkData() {
         boolean skyLight = world.dimension().hasSkyLight();
+        LightEngine.Light block = LightEngine.blockLight(this);
+        LightEngine.Light sky = skyLight ? LightEngine.skyLight(this) : null;
         ByteArrayOutputStream out = new ByteArrayOutputStream(16 * (SECTION_LONGS * 8 + 4096));
         for (int section = 0; section < 16; section++) {
             long[] packed = new long[SECTION_LONGS];
@@ -160,12 +162,13 @@ public class Chunk {
                     out.write((int) ((value >>> (i * 8)) & 0xFF));
                 }
             }
-            out.write(new byte[2048], 0, 2048); // block light
+            byte[] blockLight = block.section(section);
+            out.write(blockLight, 0, blockLight.length);
             // Sky light is only present in dimensions that have a sky. Sending it for the
             // Nether or End makes the client light them as if the sun reached underground.
             if (skyLight) {
-                byte[] sky = buildSkyLight(baseY);
-                out.write(sky, 0, sky.length);
+                byte[] skyLightSection = sky.section(section);
+                out.write(skyLightSection, 0, skyLightSection.length);
             }
         }
         // ground-up continuous: 256 bytes of biome data, one per column
@@ -182,35 +185,6 @@ public class Chunk {
             }
             out.write(part);
         } while (value != 0);
-    }
-
-    /**
-     * Sky light for one section. Full brightness above the terrain and dark below it,
-     * computed per column so caves and overhangs are not lit through solid rock.
-     */
-    private byte[] buildSkyLight(int baseY) {
-        byte[] skyLight = new byte[2048];
-        for (int z = 0; z < 16; z++) {
-            for (int x = 0; x < 16; x++) {
-                int highest = highestBlock(x, z);
-                for (int y = 0; y < 16; y++) {
-                    int worldY = baseY + y;
-                    int sky = worldY > highest ? 15 : 0;
-                    if (sky == 0) {
-                        continue;
-                    }
-                    int index = (y << 8) | (z << 4) | x;
-                    int byteIndex = index >> 1;
-                    int current = skyLight[byteIndex] & 0xFF;
-                    if ((index & 1) == 1) {
-                        skyLight[byteIndex] = (byte) (current | (sky << 4));
-                    } else {
-                        skyLight[byteIndex] = (byte) (current | sky);
-                    }
-                }
-            }
-        }
-        return skyLight;
     }
 
     private boolean inBounds(int x, int y, int z) {

@@ -10,7 +10,9 @@ import net.vibmc.plugin.event.ChatEvent;
 import net.vibmc.plugin.event.PlayerJoinEvent;
 import net.vibmc.plugin.event.PlayerQuitEvent;
 import net.vibmc.plugin.PluginManager;
+import net.vibmc.item.ItemStack;
 import net.vibmc.server.VibMC;
+import net.vibmc.world.Block;
 import net.vibmc.world.Chunk;
 import net.vibmc.world.World;
 import net.vibmc.network.Packet;
@@ -190,7 +192,6 @@ public class PlayerManager {
 
     private void sendJoinPackets(PlayerEntity player) {
         ClientConnection conn = player.getConnection();
-        World world = player.getWorld();
 
         sendLoginPlay(conn, player);
         sendDifficulty(conn);
@@ -202,6 +203,53 @@ public class PlayerManager {
         sendPlayerPosition(conn, player);
 
         // Send spawn chunks AFTER positioning so the client requests around the right center
+        streamChunksAround(player);
+        sendInventory(player);
+
+        sendGameState(conn);
+    }
+
+    /**
+     * Re-sends everything a dimension change invalidates.
+     *
+     * <p>A Respawn packet makes the client throw its world away and build a new one, and
+     * until it is told where the player is it sits on the "Downloading terrain" screen -
+     * which is what a dimension change looks like when the position never arrives. The
+     * abilities, held slot, time of day and inventory are re-sent for the same reason:
+     * the client reset them along with the world.
+     */
+    public void sendDimensionChangePackets(PlayerEntity player) {
+        ClientConnection conn = player.getConnection();
+        if (conn == null) {
+            return;
+        }
+        sendPlayerAbilities(conn, player);
+        sendHeldItemChange(conn, player);
+        sendWorldInfo(conn, player);
+        sendUpdateHealth(conn, player);
+
+        // Terrain first, then the position that closes the loading screen, so the player is
+        // never briefly standing in a world the client has no chunks for.
+        streamChunksAround(player);
+        sendPlayerPosition(conn, player);
+        sendInventory(player);
+    }
+
+    /**
+     * Pushes a player's health to their client. Sending zero is what raises the death
+     * screen, so this is also the death notification.
+     */
+    public void sendHealth(PlayerEntity player) {
+        ClientConnection conn = player.getConnection();
+        if (conn != null) {
+            sendUpdateHealth(conn, player);
+        }
+    }
+
+    /** Sends every chunk in view distance of where the player is now. */
+    private void streamChunksAround(PlayerEntity player) {
+        ClientConnection conn = player.getConnection();
+        World world = player.getWorld();
         int centerX = (int) Math.floor(player.getX()) >> 4;
         int centerZ = (int) Math.floor(player.getZ()) >> 4;
         int viewDist = VibMC.getInstance().getConfig().getViewDistance();
@@ -212,8 +260,113 @@ public class PlayerManager {
             }
         }
         player.setLoadedChunk(centerX, centerZ);
+    }
 
-        sendGameState(conn);
+    /**
+     * Tells everyone in a world that a block changed. Placing, breaking and lighting a
+     * portal all go through here, because the server owns the world state and the client
+     * only ever guessed at it.
+     */
+    public void broadcastBlockChange(World world, int x, int y, int z, short blockId) {
+        int stateId = Block.stateIdOf(blockId) & 0xFFFF;
+        for (PlayerEntity player : players.values()) {
+            if (player.getWorld() != world) {
+                continue;
+            }
+            player.sendPacket(new Packet() {
+                public int getPacketId() { return 0x0B; } // Block Change
+                public void read(PacketBuffer b) {}
+                public void write(PacketBuffer b) {
+                    b.writePosition(x, y, z);
+                    b.writeVarInt(stateId);
+                }
+            });
+        }
+    }
+
+    /**
+     * Pushes the server's copy of a player's inventory to their client.
+     *
+     * <p>The server is the one that knows what is in there - {@code /give}, and now what
+     * broke out of a block - so the whole window is sent rather than trusting the client
+     * to have kept up.
+     */
+    public void sendInventory(PlayerEntity player) {
+        ClientConnection conn = player.getConnection();
+        if (conn == null) {
+            return;
+        }
+        ItemStack[] window = new ItemStack[WINDOW_SLOTS];
+        for (int i = 0; i < player.getInventory().getSize(); i++) {
+            window[windowSlotFor(i)] = player.getInventory().getSlot(i);
+        }
+        conn.sendPacket(new Packet() {
+            public int getPacketId() { return 0x14; } // Window Items
+            public void read(PacketBuffer b) {}
+            public void write(PacketBuffer b) {
+                b.writeByte(0); // the player's own inventory window
+                b.writeShort(WINDOW_SLOTS);
+                for (ItemStack stack : window) {
+                    writeSlot(b, stack);
+                }
+            }
+        });
+    }
+
+    /**
+     * Updates one slot on the client, for the common case of placing or using a single
+     * item - no reason to resend the whole window because a stack went down by one.
+     */
+    public void sendSlot(PlayerEntity player, int inventoryIndex) {
+        ClientConnection conn = player.getConnection();
+        if (conn == null) {
+            return;
+        }
+        int windowSlot = windowSlotFor(inventoryIndex);
+        ItemStack stack = player.getInventory().getSlot(inventoryIndex);
+        conn.sendPacket(new Packet() {
+            public int getPacketId() { return 0x16; } // Set Slot
+            public void read(PacketBuffer b) {}
+            public void write(PacketBuffer b) {
+                b.writeByte(0);
+                b.writeShort(windowSlot);
+                writeSlot(b, stack);
+            }
+        });
+    }
+
+    /** Slots in the player inventory window: output, grid, armour, main, hotbar, off hand. */
+    private static final int WINDOW_SLOTS = 46;
+
+    /**
+     * Where one of our inventory slots lives in the client's window.
+     *
+     * <p>Our inventory keeps the hotbar first, at 0-8; the client puts it last, at 36-44.
+     */
+    public static int windowSlotFor(int inventoryIndex) {
+        return inventoryIndex < 9 ? inventoryIndex + 36 : inventoryIndex;
+    }
+
+    /** The inventory slot a client window slot refers to, or -1 for slots we do not model. */
+    public static int inventorySlotFor(int windowSlot) {
+        if (windowSlot >= 36 && windowSlot <= 44) {
+            return windowSlot - 36;
+        }
+        if (windowSlot >= 9 && windowSlot <= 35) {
+            return windowSlot;
+        }
+        return -1;
+    }
+
+    private static void writeSlot(PacketBuffer b, ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            b.writeShort(-1);
+            return;
+        }
+        b.writeShort(stack.getType().getId());
+        b.writeByte(stack.getAmount());
+        b.writeShort(0);  // damage
+        b.writeByte(0);   // no NBT
     }
 
     /**
@@ -328,11 +481,9 @@ public class PlayerManager {
     }
 
     private void sendPlayerAbilities(ClientConnection conn, PlayerEntity player) {
-        byte flags = 0;
-        if (player.isInvulnerable()) flags |= 0x01;
-        if (player.isFlying()) flags |= 0x02;
-        if (player.isAllowFlight()) flags |= 0x04;
-        byte finalFlags = flags;
+        // Always derived from the game mode, so joining, respawning and crossing between
+        // dimensions all leave the client with the capabilities its HUD is showing.
+        byte finalFlags = (byte) player.abilityFlags();
         conn.sendPacket(new Packet() {
             public int getPacketId() { return 0x2C; }
             public void read(PacketBuffer b) {}
@@ -415,7 +566,10 @@ public class PlayerManager {
 
         // 1.12.2 sends the chunk data raw (no zlib layer); only network-level compression applies
         byte[] chunkData = chunk.toNetworkData();
-        VibMC.getInstance().getLogger().info("Sending chunk %d,%d: raw=%d bytes", chunkX, chunkZ, chunkData.length);
+        // Debug, not info: a single join sends dozens of these, and drowning the console
+        // in them is what made it unusable to type into.
+        VibMC.getInstance().getLogger().debug("Sending chunk %d,%d: raw=%d bytes",
+                chunkX, chunkZ, chunkData.length);
         conn.sendPacket(new Packet() {
             public int getPacketId() { return 0x20; }
             public void read(PacketBuffer b) {}

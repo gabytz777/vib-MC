@@ -37,10 +37,21 @@ public class PlayerEntity extends Entity {
     /** Ticks after a teleport or dimension change during which position is not judged. */
     public static final int DIMENSION_CHANGE_GRACE_TICKS = 100;
 
+    /** Below this the player has left the world and is falling in the void. */
+    private static final int VOID_DEATH_Y = -24;
+    /** Blocks you can drop before it starts to hurt, as in vanilla. */
+    private static final double FALL_DAMAGE_FREE_BLOCKS = 3.0;
+
     private int floatingTicks;
     private int dimensionChangeGraceTicks;
     private int portalTicks;
     private int portalCooldownTicks;
+    /** Height at the previous tick, so the checks can tell falling from hovering. */
+    private double lastY;
+    /** Blocks dropped so far in the current fall. */
+    private double fallDistance;
+    /** Set on death, cleared when the client asks to respawn. */
+    private boolean dead;
 
     public PlayerEntity(World world, ClientConnection connection, String username, UUID uuid) {
         super(world, uuid);
@@ -64,12 +75,32 @@ public class PlayerEntity extends Entity {
         this.onGround = true;
     }
 
+    /**
+     * Brings the player back after death, in the overworld.
+     *
+     * <p>Dying in the Nether or the End sends you home, as vanilla does - and the client
+     * needs a Respawn packet either way, because that is what takes the death screen down.
+     */
     public void respawn() {
         setHealth(getMaxHealth());
         setFoodLevel(20);
         setFoodSaturation(5.0f);
-        spawnAtSpawn();
-        teleport(x, y, z);
+        dead = false;
+
+        World target = getWorld();
+        net.vibmc.server.VibMC server = net.vibmc.server.VibMC.getInstance();
+        if (server != null && server.getWorldManager().getMainWorld() != null) {
+            target = server.getWorldManager().getMainWorld();
+        }
+        if (target != getWorld()) {
+            getWorld().removeEntity(this);
+            setWorld(target);
+            target.addEntity(this);
+        }
+
+        int[] spawn = target.findDrySpawn(8, 8, 16);
+        rebuildWorldForClient(target, spawn[0] + 0.5,
+                target.getHighestSolidY(spawn[0], spawn[1]) + 1, spawn[1] + 0.5);
     }
 
     @Override
@@ -81,8 +112,131 @@ public class PlayerEntity extends Entity {
         if (portalCooldownTicks > 0) {
             portalCooldownTicks--;
         }
+
+        double dropped = lastY - y;
+        boolean descending = dropped > 0.005;
+        lastY = y;
+
+        if (dead) {
+            return;  // waiting on the client to press respawn
+        }
+        if (y <= VOID_DEATH_Y) {
+            die("fell out of the world");
+            return;
+        }
         tickPortal();
-        tickFlightCheck();
+        tickFall(dropped, descending);
+        tickFlightCheck(descending);
+    }
+
+    /**
+     * Adds up how far the player has dropped, and bills them for it on landing.
+     *
+     * <p>Vanilla's rule: the first three blocks are free, and every block after that is
+     * half a heart. Positions come from the client, so the distance is accumulated tick by
+     * tick rather than trusting a single report.
+     */
+    private void tickFall(double dropped, boolean descending) {
+        if (isFallExempt()) {
+            fallDistance = 0;
+            return;
+        }
+        // Landing is checked before descent, so walking down a hill settles up every tick
+        // and never accumulates into one enormous bill at the bottom.
+        if (onGround) {
+            fallDistance += Math.max(0, dropped);
+            land();
+            return;
+        }
+        if (descending) {
+            fallDistance += dropped;
+            return;
+        }
+        fallDistance = 0;  // rising, or holding still in the air
+    }
+
+    private void land() {
+        double distance = fallDistance;
+        fallDistance = 0;
+        int damage = (int) Math.floor(distance - FALL_DAMAGE_FREE_BLOCKS);
+        if (damage <= 0 || landedSoftly()) {
+            return;
+        }
+        damage(damage, "fell from a high place");
+    }
+
+    /** Water breaks a fall, as it should. */
+    private boolean landedSoftly() {
+        int blockX = (int) Math.floor(x);
+        int blockZ = (int) Math.floor(z);
+        int blockY = (int) Math.floor(y);
+        for (int dy = 0; dy >= -1; dy--) {
+            if (getWorld().getBlock(blockX, blockY + dy, blockZ) == net.vibmc.world.Block.WATER.id()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isFallExempt() {
+        if (gameMode == GameMode.CREATIVE || gameMode == GameMode.SPECTATOR) {
+            return true;
+        }
+        if (flying || dimensionChangeGraceTicks > 0) {
+            return true;
+        }
+        return false;
+    }
+
+    /** Hurts the player, killing them if it takes the last of their health. */
+    public void damage(float amount, String cause) {
+        if (dead || !alive || invulnerable || amount <= 0) {
+            return;
+        }
+        if (gameMode == GameMode.CREATIVE || gameMode == GameMode.SPECTATOR) {
+            return;
+        }
+        setHealth(getHealth() - amount);
+
+        net.vibmc.server.VibMC server = net.vibmc.server.VibMC.getInstance();
+        if (getHealth() <= 0) {
+            die(cause);
+            return;
+        }
+        if (server != null) {
+            server.getPlayerManager().sendHealth(this);
+        }
+    }
+
+    @Override
+    public void damage(float amount) {
+        damage(amount, "died");
+    }
+
+    /**
+     * Kills the player and puts the death screen up.
+     *
+     * <p>Sending zero health is what the client reacts to; it answers with a Client Status
+     * packet when the player clicks respawn, which is where {@link #respawn()} picks up.
+     */
+    public void die(String cause) {
+        if (dead) {
+            return;
+        }
+        dead = true;
+        setHealth(0);
+        floatingTicks = 0;
+
+        net.vibmc.server.VibMC server = net.vibmc.server.VibMC.getInstance();
+        if (server != null) {
+            server.getPlayerManager().sendHealth(this);
+            server.getPlayerManager().broadcastMessage(
+                    "{\"text\":\"§7" + username + " " + cause + "\"}");
+        }
+    }
+
+    public boolean isDead() {
+        return dead;
     }
 
     /**
@@ -117,8 +271,15 @@ public class PlayerEntity extends Entity {
      * is unsupported over a long window - no speed, reach, or heuristic checks - so normal
      * play and ordinary lag never trip it.
      */
-    private void tickFlightCheck() {
+    private void tickFlightCheck(boolean descending) {
         if (isFlightExempt()) {
+            floatingTicks = 0;
+            return;
+        }
+        // Falling is not flying. Someone who broke the block under themselves, or stepped
+        // off the edge of an End island, is on their way down - the check is for players
+        // who stay up, so anyone losing height is left alone.
+        if (descending || y < 0) {
             floatingTicks = 0;
             return;
         }
@@ -260,15 +421,28 @@ public class PlayerEntity extends Entity {
         setWorld(destination);
         destination.addEntity(this);
 
+        rebuildWorldForClient(destination, newX, newY, newZ);
+    }
+
+    /**
+     * Puts the player somewhere and makes the client rebuild its world around them.
+     *
+     * <p>Shared by dimension travel and respawning, because to the client they are the
+     * same event: a Respawn packet, then everything that packet just invalidated.
+     */
+    private void rebuildWorldForClient(World destination, double newX, double newY, double newZ) {
         this.x = newX;
         this.y = newY;
         this.z = newZ;
+        this.lastY = newY;
         this.onGround = true;
         // Arriving counts as a teleport: the client is mid-reload and its position reports
         // cannot be trusted for a moment.
         this.dimensionChangeGraceTicks = DIMENSION_CHANGE_GRACE_TICKS;
         this.portalCooldownTicks = net.vibmc.world.PortalTravel.COOLDOWN_TICKS;
         this.portalTicks = 0;
+        this.floatingTicks = 0;
+        this.fallDistance = 0;  // arriving somewhere is not a fall
 
         int dimensionId = destination.dimension().protocolId();
         int gameModeId = gameMode.getId();
@@ -294,6 +468,14 @@ public class PlayerEntity extends Entity {
         sentChunks.clear();
         loadedChunkX = Integer.MIN_VALUE;
         loadedChunkZ = Integer.MIN_VALUE;
+
+        // The Respawn packet only tells the client to start over. Everything it needs to
+        // finish - the new terrain, and above all the position that ends the "Downloading
+        // terrain" screen - has to follow it immediately.
+        net.vibmc.server.VibMC server = net.vibmc.server.VibMC.getInstance();
+        if (server != null && connection != null) {
+            server.getPlayerManager().sendDimensionChangePackets(this);
+        }
     }
 
     public void sendPacket(Packet packet) {
@@ -331,6 +513,36 @@ public class PlayerEntity extends Entity {
         return gameMode;
     }
 
+    /**
+     * The Player Abilities flags this player should have right now.
+     *
+     * <p>Derived from the game mode every time rather than stored, because the stored
+     * version was the bug: a Respawn packet told the client "you are in creative", and the
+     * abilities packet that followed was built from flags {@code /gamemode} never touched,
+     * so the client showed a creative HUD with survival capabilities and no flight.
+     *
+     * <p>Bits are 0x01 invulnerable, 0x02 flying, 0x04 may fly, 0x08 creative.
+     */
+    public int abilityFlags() {
+        switch (gameMode) {
+            case SPECTATOR:
+                return 0x01 | 0x02 | 0x04;
+            case CREATIVE:
+                return 0x01 | 0x04 | 0x08;
+            default:
+                int flags = 0;
+                if (invulnerable) flags |= 0x01;
+                if (flying) flags |= 0x02;
+                if (allowFlight || serverAllowsFlight()) flags |= 0x04;
+                return flags;
+        }
+    }
+
+    private static boolean serverAllowsFlight() {
+        net.vibmc.server.VibMC server = net.vibmc.server.VibMC.getInstance();
+        return server != null && server.getConfig().allowFlight();
+    }
+
     public void setGameMode(GameMode gameMode) {
         this.gameMode = gameMode;
         sendPacket(new Packet() {
@@ -349,15 +561,8 @@ public class PlayerEntity extends Entity {
                 b.writeFloat(gameMode.getId());
             }
         });
-        // sync abilities so the client actually flies/noclips: spectator = invulnerable + flying,
-        // creative = can fly
-        int flags = 0;
-        if (gameMode == GameMode.SPECTATOR) {
-            flags |= 0x01 | 0x02 | 0x04;
-        } else if (gameMode == GameMode.CREATIVE) {
-            flags |= 0x04;
-        }
-        int finalFlags = flags;
+        // Sync abilities so the client actually flies/noclips.
+        int finalFlags = abilityFlags();
         sendPacket(new Packet() {
             @Override
             public int getPacketId() {

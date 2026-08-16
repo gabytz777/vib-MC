@@ -163,6 +163,41 @@ class FlightCheckTest {
     }
 
     @Test
+    void aFallingPlayerIsNotTreatedAsFlying(@TempDir Path dir) {
+        World world = world(dir);
+        RecordingPlayer alice = player(world);
+        alice.setPosition(0.5, 250, 0.5);
+        alice.setOnGround(false);
+
+        // Breaking the block under yourself, or stepping off an End island, means a long
+        // unsupported fall. That used to read as flight and kick the player mid-drop.
+        for (int i = 0; i < LONG_ENOUGH_TO_KICK; i++) {
+            alice.setPosition(0.5, 250 - i * 0.8, 0.5);
+            alice.tick();
+            if (alice.isDead()) {
+                break;
+            }
+        }
+
+        assertEquals(null, alice.kickReason, "falling is not flying");
+    }
+
+    @Test
+    void fallingOutOfTheWorldKillsRatherThanKicks(@TempDir Path dir) {
+        World world = world(dir);
+        RecordingPlayer alice = player(world);
+        alice.setOnGround(false);
+
+        for (double y = 40; y > -60; y -= 1.5) {
+            alice.setPosition(0.5, y, 0.5);
+            alice.tick();
+        }
+
+        assertTrue(alice.isDead(), "the void kills you");
+        assertEquals(null, alice.kickReason, "and it does not disconnect you to do it");
+    }
+
+    @Test
     void nonFiniteCoordinatesAreRejectedNotMeasured() {
         // NaN would poison every later comparison, so it is refused outright rather than
         // being treated as a suspicious-but-usable position.

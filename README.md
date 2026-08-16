@@ -59,9 +59,12 @@
 | ✅ | Camera moves (chunk streaming works) |
 | ✅ | Plugin API |
 | ❌ | Mobs that exist |
-| ⚠️ | Nether (generates; travel is janky) |
-| ⚠️ | End (generates; arrival platform is there) |
-| ⚠️ | Portals (built, but janky) |
+| ✅ | Nether (open caverns, lava sea, glowstone, quartz) |
+| ✅ | End (islands, obsidian towers, arrival platform, exit portal) |
+| ✅ | Portals (player-built: flint and steel, or 12 eyes of ender) |
+| ✅ | Lighting (sky and block light are flooded, not guessed per column) |
+| ⚠️ | Building (break/place works; no crafting, no tool tiers) |
+| ❌ | The dragon fight (no mob entities yet — towers are just scenery) |
 | ✅ | Online mode (Mojang-verified logins, real skins) |
 | ❌ | Working game (soon™) |
 

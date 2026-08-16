@@ -10,6 +10,9 @@ out/
 *.class
 
 # Runtime data
+# eula.txt records one operator's acceptance of Mojang's terms - it belongs to the
+# install, not to the source, and shipping an accepted one would accept on their behalf.
+/eula.txt
 /world/
 /world_nether/
 /world_the_end/

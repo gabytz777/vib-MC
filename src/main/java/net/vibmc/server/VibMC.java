@@ -64,6 +64,11 @@ public final class VibMC {
 
     public void start() {
         running = true;
+        net.vibmc.server.util.Logger.setDebugEnabled(config.debugLogging());
+        if (!Eula.accepted(logger)) {
+            running = false;
+            return;
+        }
         if (!checkSecurityConfig()) {
             running = false;
             return;
@@ -77,10 +82,10 @@ public final class VibMC {
             return;
         }
 
-        // A world saved before dimensions existed has no way into the Nether or End, so
-        // make sure the spawn area has a portal and the End has its exit. Existing terrain
-        // is otherwise untouched.
-        net.vibmc.world.PortalTravel.ensureSpawnPortal(worldManager.getMainWorld());
+        // No portal is handed out at spawn - the way into the Nether is a frame the player
+        // builds and lights themselves. The End's exit portal is different: it is the only
+        // way back out, so it is made sure of here, including for saves made before it
+        // existed. Existing terrain is otherwise untouched.
         net.vibmc.world.PortalTravel.ensureEndExitPortal(worldManager.getEnd());
 
         pluginManager.loadPlugins("plugins");

@@ -3,6 +3,7 @@ package net.vibmc.world.gen;
 import net.vibmc.world.Block;
 import net.vibmc.world.Chunk;
 import net.vibmc.world.World;
+import net.vibmc.world.gen.structure.LavaPoolGenerator;
 import net.vibmc.world.gen.structure.VillageGenerator;
 
 /**
@@ -29,6 +30,8 @@ public class OverworldGenerator implements ChunkGenerator {
         carveCaves(chunk, terrain, chunkX, chunkZ);
         VillageGenerator.apply(chunk, terrain);
         TreeGenerator.apply(chunk, terrain);
+        // Last, so a pool clears any tree that was planted on top of it.
+        LavaPoolGenerator.apply(chunk, terrain);
     }
 
     private void buildColumn(Chunk chunk, TerrainGenerator terrain, int x, int z,

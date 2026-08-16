@@ -39,6 +39,8 @@ public class GiveCommand extends Command {
         }
         amount = Math.max(1, Math.min(64, amount));
         target.addItem(new ItemStack(type, amount));
+        // The client has no idea anything arrived until the window is re-sent.
+        VibMC.getInstance().getPlayerManager().sendInventory(target);
         sender.sendMessage("{\"text\":\"§aGave " + amount + " " + type.getName() + " to " + target.getUsername() + ".\"}");
         return true;
     }

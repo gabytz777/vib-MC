@@ -17,6 +17,21 @@ public class EndGenerator implements ChunkGenerator {
     /** Radius, in blocks, of the guaranteed-solid central island. */
     private static final int CENTRAL_RADIUS = 40;
 
+    /**
+     * Where players materialise when they enter the End, and how much void is kept clear
+     * around it. Arriving is supposed to mean standing on a small obsidian slab with
+     * nothing under you and the island off in the distance - which only reads that way if
+     * the generator is told not to grow an island there.
+     */
+    public static final int PLATFORM_X = 100;
+    public static final int PLATFORM_Z = 0;
+    public static final int PLATFORM_Y = 50;
+    private static final int PLATFORM_CLEARANCE = 20;
+
+    /** Obsidian towers ringing the central island, as the End has. */
+    private static final int PILLAR_COUNT = 10;
+    private static final int PILLAR_RING_RADIUS = 30;
+
     @Override
     public void generate(World world, Chunk chunk, int chunkX, int chunkZ) {
         TerrainGenerator terrain = new TerrainGenerator(world.seed() ^ 0x54484520454E4421L);
@@ -38,7 +53,40 @@ public class EndGenerator implements ChunkGenerator {
                         chunk.setBlock(x, y, z, Block.END_STONE.id());
                     }
                 }
+
+                raisePillar(chunk, x, z, worldX, worldZ);
             }
+        }
+    }
+
+    /**
+     * Builds the part of an obsidian tower that falls in this column, if any.
+     *
+     * <p>Worked out per column from world coordinates rather than placed per chunk, so a
+     * tower straddling a chunk border comes out whole with no agreement needed between the
+     * two chunks.
+     */
+    private void raisePillar(Chunk chunk, int x, int z, int worldX, int worldZ) {
+        for (int i = 0; i < PILLAR_COUNT; i++) {
+            double angle = i * 2 * Math.PI / PILLAR_COUNT;
+            int pillarX = (int) Math.round(Math.cos(angle) * PILLAR_RING_RADIUS);
+            int pillarZ = (int) Math.round(Math.sin(angle) * PILLAR_RING_RADIUS);
+
+            int radius = 2 + (i % 3);
+            int dx = worldX - pillarX;
+            int dz = worldZ - pillarZ;
+            if (dx * dx + dz * dz > radius * radius) {
+                continue;
+            }
+
+            int height = 18 + (i * 7) % 17;
+            int top = ISLAND_SURFACE + height;
+            for (int y = ISLAND_SURFACE; y < top; y++) {
+                chunk.setBlock(x, y, z, Block.OBSIDIAN.id());
+            }
+            // Bedrock cap, as the towers in the End are topped.
+            chunk.setBlock(x, top, z, Block.BEDROCK.id());
+            return;
         }
     }
 
@@ -48,6 +96,11 @@ public class EndGenerator implements ChunkGenerator {
      * @param distance distance from the world origin, which the central island is built around
      */
     private Integer islandThickness(TerrainGenerator terrain, int worldX, int worldZ, double distance) {
+        // Keep the arrival platform's surroundings empty so it really is a slab in the void.
+        double fromPlatform = Math.hypot(worldX - PLATFORM_X, worldZ - PLATFORM_Z);
+        if (fromPlatform <= PLATFORM_CLEARANCE) {
+            return null;
+        }
         if (distance <= CENTRAL_RADIUS) {
             // Dome the central island so it is thickest in the middle and tapers at the rim.
             double falloff = 1.0 - (distance / CENTRAL_RADIUS);

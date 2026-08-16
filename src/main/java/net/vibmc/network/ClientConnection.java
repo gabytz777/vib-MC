@@ -32,6 +32,8 @@ public class ClientConnection {
     private Cipher encryptCipher;
 
     private final Queue<byte[]> outgoing = new ConcurrentLinkedQueue<>();
+    /** Guards "encrypt this frame, then queue it" so the two stay in step. */
+    private final Object writeLock = new Object();
     private ByteBuffer currentOut;
 
     private byte[] inBuffer = new byte[8192];
@@ -244,7 +246,18 @@ public class ClientConnection {
         PacketBuffer frame = new PacketBuffer();
         frame.writeVarInt(body.length);
         frame.writeBytes(body);
-        outgoing.add(encryptOutbound(frame.toByteArray()));
+
+        // Encrypting and queueing have to happen together, under the same lock.
+        //
+        // Packets are sent from two threads - the tick loop streams chunks while the
+        // network thread answers whatever the player just did - and AES/CFB8 is a stream
+        // cipher, so a frame's ciphertext depends on every byte encrypted before it. If
+        // two threads encrypt and then queue, the queue order can come out reversed, the
+        // client decrypts the stream against the wrong keystream, and everything after
+        // that point is noise: "Bad packet id", and the connection is gone.
+        synchronized (writeLock) {
+            outgoing.add(encryptOutbound(frame.toByteArray()));
+        }
         try {
             key.interestOps(key.interestOps() | SelectionKey.OP_WRITE);
         } catch (Exception e) {
@@ -334,9 +347,14 @@ public class ClientConnection {
         frame.writeBytes(body);
         try {
             // Flush anything already queued first, so the kick does not jump ahead of it
-            // and (once encrypted) desynchronise the cipher stream.
-            flushWrites();
-            ByteBuffer buffer = ByteBuffer.wrap(encryptOutbound(frame.toByteArray()));
+            // and (once encrypted) desynchronise the cipher stream. Encrypting the kick
+            // itself takes the same lock as every other send, for the same reason.
+            byte[] encrypted;
+            synchronized (writeLock) {
+                flushWrites();
+                encrypted = encryptOutbound(frame.toByteArray());
+            }
+            ByteBuffer buffer = ByteBuffer.wrap(encrypted);
             while (buffer.hasRemaining()) {
                 channel.write(buffer);
             }

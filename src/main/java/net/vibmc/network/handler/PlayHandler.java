@@ -85,12 +85,68 @@ public class PlayHandler implements PacketHandler {
                 player.setOnGround(onGround);
                 break;
             }
+            case 0x14: { // Player Digging
+                int status = buffer.readVarInt();
+                int[] position = buffer.readPosition();
+                buffer.readByte(); // face
+                // Creative breaks instantly, so the "started digging" packet is the whole
+                // event there; survival clients time the dig themselves and report when
+                // they are finished.
+                boolean creative = player.getGameModeEnum() == net.vibmc.player.GameMode.CREATIVE;
+                if (status == 2 || (creative && status == 0)) {
+                    net.vibmc.world.BlockInteraction.breakBlock(
+                            player, position[0], position[1], position[2]);
+                }
+                break;
+            }
             case 0x1A: // Held Item Change
                 player.setHeldItemSlot(buffer.readShort());
                 break;
+            case 0x1B: { // Creative Inventory Action
+                int windowSlot = buffer.readShort();
+                readCreativeSlot(player, windowSlot, buffer);
+                break;
+            }
+            case 0x1F: { // Player Block Placement
+                int[] position = buffer.readPosition();
+                int face = buffer.readVarInt();
+                int hand = buffer.readVarInt();
+                // Off-hand clicks arrive as a second packet for the same click; acting on
+                // both would place the block twice.
+                if (hand == 0) {
+                    net.vibmc.world.BlockInteraction.useItem(
+                            player, position[0], position[1], position[2], face);
+                }
+                break;
+            }
             default:
                 break;
         }
+    }
+
+    /**
+     * Mirrors what a creative player drags into a slot into the server's own inventory.
+     *
+     * <p>The creative menu lives entirely on the client, so this packet is the only thing
+     * that tells the server what the player is now holding - and without that, placing a
+     * block would have nothing to place.
+     */
+    private static void readCreativeSlot(PlayerEntity player, int windowSlot, PacketBuffer buffer) {
+        int slot = net.vibmc.player.PlayerManager.inventorySlotFor(windowSlot);
+        if (slot < 0) {
+            return;
+        }
+        int itemId = buffer.readShort();
+        if (itemId < 0) {
+            player.getInventory().setSlot(slot, new net.vibmc.item.ItemStack(
+                    net.vibmc.item.ItemType.AIR, 0));
+            return;
+        }
+        int count = buffer.readUnsignedByte();
+        // The damage value and any NBT that follow describe details this server does not
+        // model yet, so they are left unread - the packet buffer is discarded either way.
+        net.vibmc.item.ItemType type = net.vibmc.item.ItemType.fromId(itemId);
+        player.getInventory().setSlot(slot, new net.vibmc.item.ItemStack(type, count));
     }
 
     /**
